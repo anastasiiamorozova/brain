@@ -43,14 +43,14 @@ Colours are CSS variables at the top of the file, such as `--c-hippocampus`. Str
 The list of parts is `ATLAS.parts` in the script. Each entry names a file, the highlight it belongs to, and whether it is drawn only while highlighted.
 
 - **Splits.** Two parts are split by position. The inner face of the prefrontal cortex is the medial prefrontal cortex. The back 35% of the cingulate gyrus is the posterior cingulate cortex.
-- **Enlarged nucleus.** The suprachiasmatic nucleus is about a millimetre across, so it also gets a glowing dot of 2.8 mm radius. The page text says small nuclei are enlarged.
+- **Enlarged nucleus.** The suprachiasmatic nucleus is about a millimetre across, so it also gets a glowing dot of 2.8 mm radius. The page no longer says that small nuclei are enlarged.
 - **Adding a structure.** Neurotorium serves every structure at `https://neurotorium.org/wp-content/themes/neurotorium/brain_atlas/models/<code>.glb`. The codes and names are in their `data.json`. Download the file, compress it with `npx @gltf-transform/cli draco in.glb out.glb`, save it under `models/neurotorium/`, and add an entry to `ATLAS.parts`.
 
 Compression shrank the 26 files from about 4 MB to 544 KB. The geometry is unchanged apart from tiny rounding.
 
 ## Credits and licence
 
-The models and matcaps come from Neurotorium (© Lundbeck Foundation) and are used under Onet's agreement. Neurotorium's public terms only allow personal and educational use, so publishing relies on that agreement. Make sure the credit wording on the page matches what the agreement requires. The credit appears in two places: under the brain in the graphic and in the "O grafice" note.
+The models and matcaps come from Neurotorium (© Lundbeck Foundation) and are used under Onet's agreement. Neurotorium's public terms only allow personal and educational use, so publishing relies on that agreement. Make sure the credit wording on the page matches what the agreement requires. The credit sits in the bottom-left corner of the graphic. On phones, where the story text covers that corner, it sits under the timeline instead.
 
 Two of the matcap images also appear in the free nidorx/matcaps collection on GitHub, which says their original authors are unknown.
 
