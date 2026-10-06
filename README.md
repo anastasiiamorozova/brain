@@ -1,23 +1,7 @@
-# 24 godziny z życia mózgu: 3D scrollytelling graphic
+# 24 godziny z życia mózgu
+A 3D brain built from the Neurotorium atlas models 
 
-`index.html` is the graphic. A 3D brain built from the Neurotorium atlas models stays pinned while the article cards scroll past. As the reader scrolls, the brain turns, the structures named in the text light up, and a sun moves along a 24-hour progress bar at the top.
-
-## View it
-
-The models are loaded over the network, so serve the folder instead of opening the file directly:
-
-```
-python3 -m http.server 8000
-```
-
-Then open http://localhost:8000. Opened straight from disk, the page shows a simplified brain generated in code instead of the atlas models.
-
-## Files
-
-| Path | Contents |
-|---|---|
-| `index.html` | Page, styles and script |
-| `models/neurotorium/` | 26 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
+26 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
 | `textures/matcaps/` | The two matcap images the Neurotorium atlas uses |
 
 ## Edit the story
@@ -42,17 +26,10 @@ Colours are CSS variables at the top of the file, such as `--c-hippocampus`. Str
 
 The list of parts is `ATLAS.parts` in the script. Each entry names a file, the highlight it belongs to, and whether it is drawn only while highlighted.
 
-- **Splits.** Two parts are split by position. The inner face of the prefrontal cortex is the medial prefrontal cortex. The back 35% of the cingulate gyrus is the posterior cingulate cortex.
-- **Enlarged nucleus.** The suprachiasmatic nucleus is about a millimetre across, so it also gets a glowing dot of 2.8 mm radius. The page no longer says that small nuclei are enlarged.
+
 - **Adding a structure.** Neurotorium serves every structure at `https://neurotorium.org/wp-content/themes/neurotorium/brain_atlas/models/<code>.glb`. The codes and names are in their `data.json`. Download the file, compress it with `npx @gltf-transform/cli draco in.glb out.glb`, save it under `models/neurotorium/`, and add an entry to `ATLAS.parts`.
 
 Compression shrank the 26 files from about 4 MB to 544 KB. The geometry is unchanged apart from tiny rounding.
-
-## Credits and licence
-
-The models and matcaps come from Neurotorium (© Lundbeck Foundation) and are used under Onet's agreement. Neurotorium's public terms only allow personal and educational use, so publishing relies on that agreement. Make sure the credit wording on the page matches what the agreement requires. The credit sits in the bottom-left corner of the graphic. On phones, where the story text covers that corner, it sits under the timeline instead.
-
-Two of the matcap images also appear in the free nidorx/matcaps collection on GitHub, which says their original authors are unknown.
 
 ## How it works
 
@@ -65,15 +42,3 @@ Two of the matcap images also appear in the free nidorx/matcaps collection on Gi
 - **Grain.** Film grain is added in the brain's shader, at the strength Neurotorium uses. A noise tile with the same strength is painted onto the page background, so the graphic and the article match. `GRAIN` in the script sets both.
 - **Fallback.** Part 3 of the script generates a simplified brain in code. It is used when the models cannot load, with a matcap painted in code.
 
-## Performance
-
-Measured with a Chrome trace while scrolling through the whole story at 1440×900, 2× pixel density, on an Apple M5 laptop:
-
-| Version | Main thread per frame | GPU process per frame |
-|---|---|---|
-| With a post-processing chain for FXAA and grain | about 3 ms | about 7.5 ms |
-| Current | about 3 ms | about 2 ms |
-
-On a 12 Mbit/s connection with an empty cache, the brain is ready about 2.6 s after the page starts loading, while the reader is still on the intro.
-
-When a laptop runs on battery below 20%, or when Chrome's Energy Saver is on, Chrome limits every page to 30 frames per second. Animations then look less smooth, and a page cannot turn this off. In testing, the same scroll ran at 30 frames per second on battery at 11% and at 60 when plugged in.
