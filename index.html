@@ -1,0 +1,1778 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>24 godziny z życia mózgu</title>
+  <meta name="description" content="Przewiń, aby zobaczyć, które obszary mózgu pracują najintensywniej o różnych porach doby.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23b8a79e'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap">
+
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --ink: #171717;
+      --muted: #575a56;
+      --paper: #f4f1e9;
+      --panel: rgba(255, 255, 255, 0.94);
+      --line: rgba(23, 23, 23, 0.12);
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
+
+      /* Highlight colours, kept muted like the Neurotorium atlas. The highlighted
+         words and the 3D model both read these. Structures shown in the same step
+         use clearly different hues: SCN and hypothalamus, hippocampus and neocortex,
+         amygdala and visual cortex. */
+      --c-prefrontal: #5b7db5;
+      --c-prefrontal-lateral: #5b7db5;
+      --c-prefrontal-medial: #6d6fab; /* shown as part of the DMN */
+      --c-premotor: #7d93bf;
+      --c-motor: #cf8550;
+      --c-parietal: #c49f55;
+      --c-temporal: #6c9a82;
+      --c-occipital: #7a7fc4;
+      --c-visual: #7a7fc4;
+      --c-cingulate: #6d6fab;
+      --c-pcc: #6d6fab;
+      --c-cortex: #8e9ab0;
+      --c-cerebellum: #a088b4;
+      --c-brainstem: #5f97a3;
+      --c-hypothalamus: #6f8fc0;
+      --c-scn: #e59b25;
+      --c-accumbens: #c27b8b;
+      --c-hippocampus: #3f9a86;
+      --c-amygdala: #c9574b;
+      --c-dmn: #6d6fab;
+      --c-neocortex: #d99a6c;
+      --c-glymphatic: #7ab4d1;
+
+      /* Sky colours along the timeline. */
+      --sky-night: #22305a;
+      --sky-dawn: #f3a76b;
+      --sky-day: #a8d5f2;
+      --sky-dusk: #ef8a63;
+
+      --sans: "Fira Sans", system-ui, sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Film grain: --grain is a noise tile painted by the script, the same
+       strength as the grain on the 3D model, so page and graphic match. */
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--grain, none) 0 0 / 128px 128px, var(--paper);
+      font-family: var(--serif);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Intro ---------- */
+
+    .intro {
+      min-height: 92vh;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 20px;
+      padding: 12vh 24px 8vh;
+      text-align: center;
+    }
+
+    .intro h1 {
+      margin: 0;
+      max-width: 12ch;
+      font: 700 clamp(44px, 8vw, 92px)/0.95 var(--sans);
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+
+    .dek {
+      margin: 0;
+      max-width: 34rem;
+      font-size: clamp(18px, 2.1vw, 22px);
+      line-height: 1.45;
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
+    .scroll-hint {
+      margin: 3vh 0 0;
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      font: 500 14px/1 var(--sans);
+      color: var(--muted);
+    }
+
+    .scroll-hint::after {
+      content: "";
+      width: 1px;
+      height: 46px;
+      background: linear-gradient(var(--muted), transparent);
+      transform-origin: top;
+      animation: hint 1.8s ease-in-out infinite;
+    }
+
+    @keyframes hint {
+      0% { transform: scaleY(0); opacity: 1; }
+      70% { transform: scaleY(1); opacity: 1; }
+      100% { transform: scaleY(1); opacity: 0; }
+    }
+
+    /* ---------- Scrollytelling: sticky brain + scrolling cards ---------- */
+
+    .scrolly {
+      position: relative;
+      /* Background shared by the brain's layer and the timeline header, so the
+         header blends in: a soft light behind the brain, grain and paper. */
+      --stage:
+        radial-gradient(circle at var(--brain-x, 60%) var(--brain-y, 55%), rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0) 42vmax),
+        var(--grain, none) 0 0 / 128px 128px,
+        var(--paper);
+    }
+
+    /* The timeline header sits above the story text, which slides under it and
+       never reaches the top of the screen. The layer is as tall as the brain's,
+       so the two stick and unstick together. */
+    .sticky-overlay {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      height: 100vh;
+      margin-bottom: -100vh;
+      pointer-events: none;
+    }
+
+    .timeline-head {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(clamp(14px, 3vh, 26px) + 108px);
+      background: var(--stage);
+      /* the bottom edge fades, so text disappears gradually as it slides under */
+      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+      mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    }
+
+    /* The brain stays pinned while the steps scroll over it. Sticky only works
+       if no ancestor has overflow: hidden, so keep those off the parents. */
+    .sticky-visual {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--stage);
+    }
+
+    .sticky-visual canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 900ms ease;
+    }
+
+    .sticky-visual.is-ready canvas { opacity: 1; }
+
+    .loader {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font: 500 15px/1.4 var(--sans);
+      color: var(--muted);
+      text-align: center;
+      transition: opacity 400ms ease;
+    }
+
+    .sticky-visual.is-ready .loader {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .credit {
+      position: absolute;
+      left: max(24px, 6vw);
+      bottom: 14px;
+      margin: 0;
+      font: 400 11px/1.3 var(--sans);
+      color: var(--muted);
+    }
+
+    .credit--head { display: none; } /* used on phones, where text covers the bottom */
+
+
+    /* ---------- Timeline: a day from 6:00 to 6:00 with a moving sun ---------- */
+
+    .timeline {
+      --p: 0; /* progress through the day, 0 to 1, set by the script */
+      position: absolute;
+      top: clamp(14px, 3vh, 26px);
+      left: max(24px, 6vw);
+      right: max(24px, 6vw);
+      z-index: 2;
+      padding-top: 38px;
+      pointer-events: none;
+      font-family: var(--sans);
+      /* Own compositing layer: the bar changes every frame while scrolling, and this
+         keeps those repaints from touching the large grainy background behind it. */
+      will-change: transform;
+    }
+
+    .timeline__bar {
+      position: relative;
+      height: 6px;
+    }
+
+    .timeline__track,
+    .timeline__fill {
+      position: absolute;
+      inset: 0;
+      border-radius: 3px;
+      background: linear-gradient(90deg,
+        var(--sky-dawn) 0%, var(--sky-day) 8%, var(--sky-day) 46%, var(--sky-dusk) 54%,
+        var(--sky-night) 63%, var(--sky-night) 92%, var(--sky-dawn) 100%);
+    }
+
+    .timeline__track { opacity: 0.22; }
+
+    .timeline__fill {
+      clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0 round 3px);
+    }
+
+    .timeline__marker {
+      position: absolute;
+      top: 50%;
+      left: calc(var(--p) * 100%);
+    }
+
+    .timeline__icon {
+      position: absolute;
+      left: -17px;
+      top: -17px;
+      width: 34px;
+      height: 34px;
+      overflow: visible;
+    }
+
+    .timeline__sun circle { fill: #ffd23f; stroke: #f59e0b; stroke-width: 1.4; }
+    .timeline__sun line { stroke: #f59e0b; stroke-width: 1.8; stroke-linecap: round; }
+    .timeline__moon { fill: #eef1f8; stroke: #5b6687; stroke-width: 1.2; }
+
+    .timeline__time {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      transform: translateX(-50%);
+      font: 600 14px/1 var(--sans);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .timeline__ticks {
+      position: relative;
+      height: 12px;
+      margin-top: 12px;
+    }
+
+    .timeline__ticks span {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      font: 500 11px/1 var(--sans);
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+
+    /* ---------- Steps ---------- */
+
+    .steps {
+      position: relative;
+      z-index: 1;
+      margin-top: -100vh; /* pull the steps up so they scroll over the sticky brain */
+      pointer-events: none;
+    }
+
+    .step {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 max(24px, 6vw);
+    }
+
+    /* Story text sits straight on the page, without a box. A soft glow in the
+       paper colour keeps it readable where it passes over the brain. */
+    .step-text {
+      width: min(440px, 36vw);
+      font: 400 clamp(18px, 1.4vw, 21px)/1.5 var(--sans);
+      text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 14px var(--paper);
+      pointer-events: auto;
+    }
+
+    .step-text p { margin: 0; }
+    .step-text p + p { margin-top: 0.8em; }
+
+    /* Structure names in the text, in the colour they have on the model */
+    .step-text mark {
+      padding: 0.02em 0.22em;
+      border-radius: 3px;
+      background: color-mix(in srgb, var(--mark, #c9c4b8) 50%, var(--paper));
+      color: inherit;
+      font-weight: 500;
+      text-shadow: none;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    /* ---------- Outro ---------- */
+
+    .outro {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 16vh 24px 18vh;
+    }
+
+    .outro h2 {
+      margin: 0 0 16px;
+      font: 700 28px/1.15 var(--sans);
+    }
+
+    .outro p {
+      margin: 0 0 1em;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .outro .credits {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font: 400 14px/1.5 var(--sans);
+      color: var(--muted);
+    }
+
+    /* ---------- Phones: brain on top, text slides up from the bottom ---------- */
+
+    @media (max-width: 760px) {
+      .step {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0 12px 4vh;
+      }
+
+      .step-text {
+        width: 100%;
+        max-width: 520px;
+        font-size: 17px;
+        text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 12px var(--paper), 0 0 22px var(--paper);
+      }
+
+      .timeline {
+        top: 10px;
+        left: 18px;
+        right: 18px;
+        padding-top: 34px;
+      }
+
+      .timeline__ticks span.is-minor { display: none; }
+
+
+      .timeline-head { height: 126px; }
+
+      .credit { display: none; }
+
+      .credit--head {
+        display: block;
+        left: auto;
+        right: 18px;
+        bottom: auto;
+        top: 80px;
+        font-size: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-hint::after { animation: none; }
+      .sticky-visual canvas { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="intro">
+    <h1>24 godziny z życia mózgu</h1>
+    <p class="dek">Różne obszary mózgu osiągają szczyt aktywności o różnych porach doby. Przewiń, aby przejść od porannego przebudzenia po głęboki sen.</p>
+    <p class="scroll-hint">Przewiń</p>
+  </header>
+
+  <main>
+    <section class="scrolly" aria-label="Mózg w ciągu doby – model 3D">
+      <!-- Timeline header: stays above the story text, which slides under it. -->
+      <div class="sticky-overlay" aria-hidden="true">
+        <div class="timeline-head">
+          <div class="timeline" aria-hidden="true">
+            <div class="timeline__bar">
+              <div class="timeline__track"></div>
+              <div class="timeline__fill"></div>
+              <div class="timeline__marker">
+                <span class="timeline__time">06:00</span>
+                <svg class="timeline__icon" viewBox="-17 -17 34 34">
+                  <defs>
+                    <mask id="moon-cut">
+                      <rect x="-17" y="-17" width="34" height="34" fill="#fff"></rect>
+                      <circle r="7" cx="4" cy="-3" fill="#000"></circle>
+                    </mask>
+                  </defs>
+                  <g class="timeline__sun">
+                    <line x1="0" y1="-11" x2="0" y2="-15"></line>
+                    <line x1="0" y1="11" x2="0" y2="15"></line>
+                    <line x1="-11" y1="0" x2="-15" y2="0"></line>
+                    <line x1="11" y1="0" x2="15" y2="0"></line>
+                    <line x1="7.8" y1="7.8" x2="10.6" y2="10.6"></line>
+                    <line x1="-7.8" y1="7.8" x2="-10.6" y2="10.6"></line>
+                    <line x1="7.8" y1="-7.8" x2="10.6" y2="-10.6"></line>
+                    <line x1="-7.8" y1="-7.8" x2="-10.6" y2="-10.6"></line>
+                    <circle r="8"></circle>
+                  </g>
+                  <g class="timeline__moon" style="opacity: 0">
+                    <circle r="8" mask="url(#moon-cut)"></circle>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div class="timeline__ticks"></div>
+          </div>
+          <p class="credit credit--head">Model 3D: Neurotorium.org © Lundbeck Foundation</p>
+        </div>
+      </div>
+
+      <div class="sticky-visual" id="brainVisual">
+        <canvas id="brainCanvas" role="img" aria-label="Obracający się model 3D mózgu z zaznaczonymi obszarami, o których mowa w tekście"></canvas>
+        <p class="loader" id="brainLoader">Ładowanie modelu mózgu…</p>
+
+        <p class="credit">Model 3D: Neurotorium.org © Lundbeck Foundation</p>
+      </div>
+
+      <!--
+        Each step is one keyframe:
+          data-time       time of day when the text is centred (HH:MM). The timeline runs
+                          from the first step's time to 24 hours later; times after
+                          midnight continue the same night.
+          data-highlight  what lights up, separated by spaces. Optional strength after a colon, e.g. "prefrontal:0.45".
+                          Names: prefrontal, premotor, motor, parietal, temporal, occipital,
+                          visual, cingulate, pcc, prefrontal-medial, cerebellum, brainstem,
+                          hypothalamus, scn, accumbens, hippocampus, amygdala, plus the
+                          groups "dmn" and "neocortex" and "glymphatic" (a wave washing
+                          through the brain). Structures inside the brain make the cortex
+                          see-through automatically.
+          data-yaw        turn around the vertical axis in degrees (0 = face towards you).
+                          Keep the values going one way to keep the brain turning one way.
+          data-pitch      tilt in degrees: positive shows the top, negative the underside.
+          data-zoom       1 fits the screen, 1.1 is 10% closer.
+        In the text, <mark data-token="name"> colours a word like that structure on the model.
+        Between two steps the model, colours and timeline move with the scroll.
+      -->
+      <div class="steps">
+        <section class="step" data-time="06:00" data-yaw="15" data-pitch="14">
+          <div class="step-text">
+            <p>Mózg nie pracuje przez całą dobę tak samo. Różne jego obszary osiągają szczyt aktywności o różnych porach dnia i nocy.</p>
+            <p>Słońce na pasku u góry pokazuje porę doby, a kolory na modelu – obszary, o których właśnie czytasz.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="07:00" data-highlight="scn hypothalamus" data-yaw="-48" data-pitch="-8" data-zoom="1.25">
+          <div class="step-text">
+            <p><mark data-token="scn">Jądro nadskrzyżowaniowe (SCN)</mark> to główny biologiczny zegar organizmu zlokalizowany w <mark data-token="hypothalamus">podwzgórzu</mark>. Rano, pod wpływem światła docierającego do siatkówki oka, SCN wykazuje najwyższą częstotliwość wyładowań elektrycznych. Hamuje wydzielanie melatoniny i wysyła sygnał do pobudzenia układu współczulnego.</p>
+            <p>U większości osób najwyższa wydajność funkcji wykonawczych i analitycznych przypada na późny ranek, jednak godziny szczytu różnią się w zależności od chronotypu.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="10:00" data-highlight="prefrontal" data-yaw="-62" data-pitch="10" data-zoom="1.08">
+          <div class="step-text">
+            <p><mark data-token="prefrontal">Kora przedczołowa</mark> odpowiada za myślenie analityczne, planowanie, pamięć roboczą i podejmowanie decyzji. Zgodnie z badaniami neuroobrazowaniowymi u większości osób jej metabolizm i wydajność osiągają szczyt w ciągu pierwszych kilku godzin po pełnym rozbudzeniu.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="12:45" data-highlight="accumbens" data-yaw="-80" data-pitch="4" data-zoom="1.12">
+          <div class="step-text">
+            <p>W tych godzinach naturalnie spada czujność i skupienie na trudnych zadaniach, ale wzrasta podatność na poszukiwanie nagrody i interakcje społeczne.</p>
+            <p>Badania pokazują, że reaktywność <mark data-token="accumbens">jądra półleżącego</mark> na bodźce nagradzające wykazuje rytmikę dobową ze specyficznymi wahaniami w godzinach popołudniowych i wieczornych, stąd w tych godzinach mamy większą motywację do kontaktów społecznych i szukania przyjemności.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="14:15" data-highlight="prefrontal:0.45" data-yaw="-100" data-pitch="14" data-zoom="1.04">
+          <div class="step-text">
+            <p>Spada aktywność <mark data-token="prefrontal">kory przedczołowej</mark>. Wzrost ciśnienia sennego nakłada się na dobowy spadek temperatury ciała, co prowadzi do chwilowego obniżenia metabolizmu w obszarach asocjacyjnych kory mózgowej. Następuje naturalny spadek czujności i funkcji poznawczych związany z rytmem dobowym i presją snu.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="17:00" data-highlight="motor" data-yaw="-135" data-pitch="40" data-zoom="1.04">
+          <div class="step-text">
+            <p>Organizm osiąga najwyższą temperaturę ciała, a <mark data-token="motor">kora ruchowa</mark> wykazuje najwyższą pobudliwość, co w badaniach nad TMS – przezczaszkową stymulacją magnetyczną – przekłada się na najkrótszy czas reakcji i najlepszą koordynację fizyczną.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="19:15" data-highlight="prefrontal-medial pcc" data-yaw="-172" data-pitch="26" data-zoom="1.06">
+          <div class="step-text">
+            <p>Pod koniec dnia, gdy spada ścisła kontrola egzekutywna kory przedczołowej, częściej aktywuje się <mark data-token="dmn">sieć spoczynkowa (DMN)</mark>. U części osób może sprzyjać to myśleniu nieprzetartymi szlakami, łączeniu odległych faktów i kreatywności.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:0.35" data-yaw="-215" data-pitch="8" data-zoom="1.08">
+          <div class="step-text">
+            <p>W fazie wolnofalowej (NREM) <mark data-token="hippocampus">hipokamp</mark> „odgrywa” ślady pamięciowe z minionego dnia i przesyła je do <mark data-token="neocortex">kory nowej</mark> w celu trwałego zapamiętania. Następuje tzw. konsolidacja pamięci.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="02:30" data-highlight="glymphatic" data-yaw="-245" data-pitch="12" data-zoom="1">
+          <div class="step-text">
+            <p>Badania sugerują, że podczas głębokiego snu wzrasta przepływ płynu mózgowo-rdzeniowego i aktywność <mark data-token="glymphatic">układu glimfatycznego</mark> odpowiedzialnego za usuwanie produktów przemiany materii z mózgu.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="04:45" data-highlight="amygdala visual" data-yaw="-285" data-pitch="2" data-zoom="1.06">
+          <div class="step-text">
+            <p>Podczas fazy REM aktywność <mark data-token="amygdala">ciała migdałowatego</mark> oraz <mark data-token="visual">kory wzrokowej</mark> jest niemal tak wysoka jak na jawie (stąd wyraziste sny), podczas gdy aktywność grzbietowo-bocznej kory przedczołowej jest wyraźnie obniżona, co może tłumaczyć ograniczoną kontrolę logiczną i krytyczną ocenę wydarzeń sennych.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="06:00" data-highlight="scn hypothalamus" data-yaw="-408" data-pitch="-8" data-zoom="1.25">
+          <div class="step-text">
+            <p>O świcie światło znów dociera do siatkówki, <mark data-token="scn">jądro nadskrzyżowaniowe</mark> hamuje wydzielanie melatoniny i zaczyna się kolejna doba.</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="outro">
+      <h2>O grafice</h2>
+      <p>Modele struktur mózgu pochodzą z trójwymiarowego atlasu Neurotorium przygotowanego przez Lundbeck Foundation. Położenie struktur jest przybliżone, a bardzo małe jądra, takie jak jądro nadskrzyżowaniowe, zostały powiększone, aby były widoczne.</p>
+      <p class="credits">Model 3D: Neurotorium.org © Lundbeck Foundation. Grafika 3D: three.js</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+    import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
+
+    /* =====================================================================
+       REGIONS
+       Everything that can light up. Steps refer to these names (and the
+       groups below) in data-highlight; colours come from --c-<name> in CSS.
+       ===================================================================== */
+
+    const REGIONS = [
+      'prefrontal-lateral', 'prefrontal-medial', 'premotor', 'motor', 'parietal', 'temporal',
+      'occipital', 'visual', 'cingulate', 'pcc', 'cortex', 'cerebellum', 'brainstem',
+      'hypothalamus', 'scn', 'accumbens', 'hippocampus', 'amygdala',
+    ];
+    const REGION_ID = Object.fromEntries(REGIONS.map((name, i) => [name, i]));
+    const N = REGIONS.length;
+    const GROUPS = {
+      prefrontal: ['prefrontal-lateral', 'prefrontal-medial'],
+      dmn: ['prefrontal-medial', 'pcc'], // default mode network hubs named in the text
+      neocortex: ['prefrontal-lateral', 'prefrontal-medial', 'premotor', 'motor', 'parietal', 'temporal',
+        'occipital', 'cingulate', 'pcc', 'cortex'],
+    };
+    // Highlighting any of these makes the outer cortex see-through.
+    const DEEP = new Set(['hypothalamus', 'scn', 'accumbens', 'hippocampus', 'amygdala', 'pcc']);
+    // Cortex on the inner walls between the hemispheres: when highlighted, it is drawn
+    // in front of the see-through outer surface so it stays visible.
+    const WALLS = new Set(['prefrontal-medial', 'pcc']);
+
+    /* =====================================================================
+       SETTINGS: the Neurotorium atlas
+       Brain structures from the Neurotorium 3D atlas (© Lundbeck Foundation),
+       used under Onet's agreement. One Draco-compressed file per structure in
+       models/neurotorium/, named by Neurotorium's structure code.
+         region  highlight the part belongs to; a function can split a part by position
+         inner   drawn only while highlighted (structures inside, surface overlays)
+         overlay lies on another part's surface; drawn slightly in front to avoid flicker
+         marker  radius in cm of a glowing dot, for structures too small to see
+       ===================================================================== */
+
+    const ATLAS = {
+      models: 'models/neurotorium/',
+      matcap: 'textures/matcaps/80726C_DCDBD7_9AA6C2_B7BFCA-256px.png',
+      highlightMatcap: 'textures/matcaps/8C5945_D4C0B6_C3A49C_430504bw-256px.png',
+      parts: [
+        // Outer brain
+        { code: '1.1.1.3.0', name: 'Prefrontal cortex', region: medialOrLateral('prefrontal-medial', 'prefrontal-lateral') },
+        { code: '1.1.1.4.0', name: 'Premotor cortex', region: 'premotor' },
+        { code: '1.1.1.5.1', name: 'Precentral gyrus (primary motor cortex)', region: 'motor' },
+        { code: '1.1.2.1.1', name: 'Postcentral gyrus', region: 'parietal' },
+        { code: '1.1.2.0.0', name: 'Parietal lobe', region: 'parietal' },
+        { code: '1.1.3.0.0', name: 'Occipital lobe', region: 'occipital' },
+        { code: '1.1.4.0.0', name: 'Temporal lobe', region: 'temporal' },
+        { code: '1.1.1.7.0', name: 'Central sulcus', region: 'cortex' },
+        { code: '1.1.1.8.0', name: 'Lateral sulcus', region: 'cortex' },
+        { code: '1.1.4.4.0', name: 'Insula', region: 'cortex' },
+        { code: '1.1.1.1.1', name: 'Cingulate gyrus', region: posteriorPart('pcc', 'cingulate') },
+        { code: '1.1.1.1.2', name: 'Parahippocampal gyrus', region: 'cortex' },
+        { code: '2.1.0.0.0', name: 'Cerebellar hemispheres', region: 'cerebellum' },
+        { code: '2.3.0.0.0', name: 'Vermis', region: 'cerebellum' },
+        { code: '2.1.1.0.0', name: 'Flocculonodular lobe', region: 'cerebellum' },
+        { code: '4.2.0.0.0', name: 'Midbrain', region: 'brainstem' },
+        { code: '4.3.0.0.0', name: 'Pons', region: 'brainstem' },
+        { code: '4.1.0.0.0', name: 'Medulla oblongata', region: 'brainstem' },
+        // Shown only while highlighted
+        { code: '1.1.3.1.0', name: 'Primary visual cortex', region: 'visual', inner: true, overlay: true },
+        { code: '3.2.0.0.0', name: 'Hypothalamus', region: 'hypothalamus', inner: true },
+        { code: '3.2.4.0.0', name: 'Suprachiasmatic nucleus', region: 'scn', inner: true, marker: 0.28 },
+        { code: '1.1.10.0.0', name: 'Nucleus accumbens', region: 'accumbens', inner: true },
+        { code: '1.1.4.3.3', name: 'Hippocampus proper', region: 'hippocampus', inner: true },
+        { code: '1.1.4.3.2', name: 'Dentate gyrus', region: 'hippocampus', inner: true },
+        { code: '1.1.4.3.1', name: 'Subiculum', region: 'hippocampus', inner: true },
+        { code: '1.1.6.5.0', name: 'Amygdala', region: 'amygdala', inner: true },
+      ],
+    };
+
+    // Vertices on the inner face of a part, next to the midline, form their own region.
+    function medialOrLateral(medial, lateral) {
+      return (p, n, box) => {
+        const side = p.x - (box.min.x + box.max.x) / 2;
+        return Math.abs(side) < 1.6 && n.x * Math.sign(side) < -0.45 ? medial : lateral;
+      };
+    }
+
+    // The back part of a structure (along the front-back axis) forms its own region.
+    function posteriorPart(posterior, rest, fraction = 0.35) {
+      return (p, n, box) => ((p.z - box.min.z) / (box.max.z - box.min.z) < fraction ? posterior : rest);
+    }
+
+    const MODEL_RADIUS = 0.9; // every model is scaled to this bounding radius
+    const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smoothstep = (e0, e1, v) => {
+      const t = clamp((v - e0) / (e1 - e0), 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+    const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    // Film grain strength: the spread of brightness noise in display colours.
+    // Neurotorium uses about 0.1. The page background gets a matching noise tile.
+    const GRAIN = 0.1;
+    (function paintPageGrain() {
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      const size = Math.round(128 * scale);
+      const tile = document.createElement('canvas');
+      tile.width = tile.height = size;
+      const context = tile.getContext('2d');
+      const image = context.createImageData(size, size);
+      const hex = cssVar('--paper').replace('#', '');
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      for (let i = 0; i < image.data.length; i += 4) {
+        const n = (Math.random() - 0.5) * GRAIN * 255; // same spread as the grain on the model
+        image.data[i] = r + n;
+        image.data[i + 1] = g + n;
+        image.data[i + 2] = b + n;
+        image.data[i + 3] = 255;
+      }
+      context.putImageData(image, 0, 0);
+      document.documentElement.style.setProperty('--grain', `url(${tile.toDataURL()})`);
+    })();
+
+    /* =====================================================================
+       PART 1. Shading shared by every part
+       Matcap shading as in the Neurotorium atlas: lighting comes from an image
+       of a lit sphere instead of lights. Each vertex carries a region number
+       (aRegion) and a shade (aOcclusion). Uniforms set from the scroll decide
+       how strongly each region is coloured, whether the cortex is
+       see-through and whether the glymphatic wave is running.
+       ===================================================================== */
+
+    const shading = {
+      uRegionWeights: { value: REGIONS.map(() => 0) },
+      uRegionColors: { value: REGIONS.map(() => new THREE.Color()) },
+      uRegionWall: { value: REGIONS.map((name) => (WALLS.has(name) ? 1 : 0)) },
+      uHighlightMatcap: { value: null },
+      uFocus: { value: 0 },
+      uGhost: { value: 0 },
+      uWash: { value: 0 },
+      uWashColor: { value: new THREE.Color(cssVar('--c-glymphatic')) },
+      uTime: { value: 0 },
+      uGrain: { value: GRAIN },
+      uBrainInverse: { value: new THREE.Matrix4() },
+    };
+
+    function createRegionMaterial(matcap, { inner = false, overlay = false, wallsOnly = false } = {}) {
+      const material = new THREE.MeshMatcapMaterial({ matcap, vertexColors: true, transparent: true });
+      if (inner) material.defines = { REGION_INNER: '' };
+      if (wallsOnly) material.defines = { REGION_INNER: '', REGION_WALLS_ONLY: '' };
+      if (overlay) {
+        // Overlays such as the visual cortex lie exactly on a lobe's surface.
+        material.polygonOffset = true;
+        material.polygonOffsetFactor = -1;
+        material.polygonOffsetUnits = -4;
+      }
+      material.onBeforeCompile = (shader) => {
+        Object.assign(shader.uniforms, shading);
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', `#include <common>
+            attribute float aRegion;
+            attribute float aOcclusion;
+            uniform float uRegionWeights[${N}];
+            uniform vec3 uRegionColors[${N}];
+            uniform float uRegionWall[${N}];
+            uniform mat4 uBrainInverse;
+            varying float vRegionWeight;
+            varying vec3 vRegionColor;
+            varying float vRegionWall;
+            varying float vOcclusion;
+            varying vec3 vBrainPosition;`)
+          .replace('#include <color_vertex>', `#include <color_vertex>
+            {
+              int region = int(floor(aRegion + 0.5));
+              int slot = clamp(region, 0, ${N - 1});
+              float known = region == slot ? 1.0 : 0.0;
+              vRegionWeight = uRegionWeights[slot] * known;
+              vRegionWall = uRegionWall[slot] * known;
+              vRegionColor = uRegionColors[slot];
+              vOcclusion = aOcclusion;
+              vBrainPosition = (uBrainInverse * modelMatrix * vec4(position, 1.0)).xyz;
+            }`);
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', `#include <common>
+            uniform sampler2D uHighlightMatcap;
+            uniform float uFocus;
+            uniform float uGhost;
+            uniform float uWash;
+            uniform vec3 uWashColor;
+            uniform float uTime;
+            uniform float uGrain;
+            varying float vRegionWeight;
+            varying vec3 vRegionColor;
+            varying float vRegionWall;
+            varying float vOcclusion;
+            varying vec3 vBrainPosition;
+            float grainNoise(vec2 p) {
+              vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+              p3 += dot(p3, p3.yzx + 33.33);
+              return fract((p3.x + p3.y) * p3.z);
+            }`)
+          .replace('#include <colorspace_fragment>', `#include <colorspace_fragment>
+            // Film grain in display colours, one speck per device pixel, as on the page.
+            gl_FragColor.rgb += (grainNoise(gl_FragCoord.xy) - 0.5) * uGrain;`)
+          .replace('#include <opaque_fragment>', `{
+              // Tissue: the atlas matcap, darkened in creases; muted while something else is in focus.
+              vec3 tissue = outgoingLight * vOcclusion;
+              vec3 grey = vec3(dot(tissue, vec3(0.2126, 0.7152, 0.0722)));
+              tissue = mix(tissue, mix(tissue, grey, 0.6), uFocus * (1.0 - vRegionWeight));
+              // Highlight: a neutral grey matcap tinted with the region colour.
+              vec3 shade = texture2D(uHighlightMatcap, uv).rgb;
+              vec3 lit = vRegionColor * (0.3 + 0.75 * shade) * vOcclusion;
+              lit = mix(lit, vec3(dot(lit, vec3(0.2126, 0.7152, 0.0722))), 0.25); // a little greyer, like the atlas
+              outgoingLight = mix(tissue, lit, vRegionWeight);
+              // Glymphatic step: waves of fluid washing through the brain.
+              float wave = 0.5 + 0.5 * sin(dot(vBrainPosition, vec3(0.0, 0.45, 1.0)) * 16.0 - uTime * 2.4);
+              outgoingLight = mix(outgoingLight, uWashColor * (0.55 + 0.6 * shade.r), uWash * (0.3 + 0.5 * wave));
+              #ifdef REGION_INNER
+                #ifdef REGION_WALLS_ONLY
+                  // Only clearly highlighted inner-wall cortex is drawn in this pass,
+                  // not a faint tint of the whole cortex.
+                  if (vRegionWall < 0.5) discard;
+                  diffuseColor.a *= smoothstep(0.4, 0.8, vRegionWeight);
+                #else
+                  // Structures inside appear only while they are highlighted.
+                  diffuseColor.a *= smoothstep(0.02, 0.35, vRegionWeight);
+                #endif
+                if (diffuseColor.a < 0.01) discard;
+              #else
+                // See-through cortex: edges stay visible, faces turned to you fade out.
+                float facing = abs(dot(normalize(normal), normalize(vViewPosition)));
+                float seeThrough = mix(0.05 + 0.45 * pow(1.0 - facing, 2.0), 0.92, vRegionWeight);
+                diffuseColor.a *= mix(1.0, seeThrough, uGhost);
+              #endif
+            }
+            #include <opaque_fragment>`);
+      };
+      return material;
+    }
+
+    // A matcap painted in code, used when the atlas files can't be loaded.
+    function paintMatcap(shade) {
+      const size = 128;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const context = canvas.getContext('2d');
+      const image = context.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const nx = (x + 0.5) / size * 2 - 1;
+          const ny = 1 - (y + 0.5) / size * 2;
+          const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+          const rgb = shade(nx, ny, nz);
+          const k = (y * size + x) * 4;
+          image.data[k] = rgb[0];
+          image.data[k + 1] = rgb[1];
+          image.data[k + 2] = rgb[2];
+          image.data[k + 3] = 255;
+        }
+      }
+      context.putImageData(image, 0, 0);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.LinearSRGBColorSpace; // read as linear light, like the atlas matcaps
+      return texture;
+    }
+
+    const fallbackMatcaps = () => ({
+      // warm grey with a cool rim, close to the atlas look
+      matcap: paintMatcap((x, y, z) => {
+        const d = clamp(-0.45 * x + 0.55 * y + 0.7 * z, 0, 1);
+        const rim = Math.pow(1 - z, 3);
+        return [118 + 90 * d + 120 * rim, 100 + 82 * d + 130 * rim, 92 + 78 * d + 150 * rim].map((v) => clamp(v, 0, 255));
+      }),
+      // neutral grey for tinted highlights
+      highlight: paintMatcap((x, y, z) => {
+        const d = clamp(-0.4 * x + 0.6 * y + 0.7 * z, 0, 1);
+        const spot = Math.pow(clamp(-0.3 * x + 0.5 * y + 0.81 * z, 0, 1), 24);
+        const v = clamp(55 + 150 * d + 60 * spot, 0, 255);
+        return [v, v, v];
+      }),
+    });
+
+    /* =====================================================================
+       See-through cortex as one surface
+       The outer brain is many overlapping parts. Blending them all while the
+       cortex is see-through would show every part through every other part,
+       which looks like layers piling up during the fade. Instead, a
+       depth-only pass marks the outermost surface first, so only that
+       surface is blended. Highlighted cortex is drawn before that pass, so
+       highlighted inner walls (such as the DMN hubs) still show through.
+       ===================================================================== */
+
+    function createDepthOnlyMaterial() {
+      return new THREE.MeshBasicMaterial({
+        colorWrite: false,
+        transparent: true,         // sorted with the other passes by renderOrder
+        polygonOffset: true,       // a hair behind, so the outer surface itself passes the depth test
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1,
+      });
+    }
+
+    // Draw order while see-through: 0 structures inside and highlighted cortex,
+    // 1 depth of the outer surface, 2 the outer surface itself.
+    function addSeeThroughPasses(shellMeshes, highlightMaterial, depthMaterial) {
+      const extra = [];
+      for (const mesh of shellMeshes) {
+        for (const [material, order] of [[highlightMaterial, 0], [depthMaterial, 1]]) {
+          const pass = new THREE.Mesh(mesh.geometry, material);
+          pass.position.copy(mesh.position);
+          pass.quaternion.copy(mesh.quaternion);
+          pass.scale.copy(mesh.scale);
+          pass.renderOrder = order;
+          pass.visible = false; // only while the cortex is see-through
+          mesh.parent.add(pass);
+          extra.push(pass);
+        }
+        mesh.renderOrder = 2;
+      }
+      return extra;
+    }
+
+    /* =====================================================================
+       PART 2. Loading the Neurotorium atlas
+       ===================================================================== */
+
+    async function loadAtlas() {
+      const draco = new DRACOLoader().setDecoderPath(import.meta.resolve('three/addons/libs/draco/gltf/'));
+      draco.preload(); // fetch the decoder while the model files download
+      const loader = new GLTFLoader().setDRACOLoader(draco);
+      const textures = new THREE.TextureLoader();
+      const [matcap, highlight, ...files] = await Promise.all([
+        textures.loadAsync(ATLAS.matcap),
+        textures.loadAsync(ATLAS.highlightMatcap),
+        ...ATLAS.parts.map((part) => loader.loadAsync(`${ATLAS.models}${part.code}.glb`)),
+      ]);
+      draco.dispose();
+      // Like the Neurotorium atlas, read the matcap colours as linear light. The
+      // display conversion then lifts them, which gives the soft, creamy look.
+      matcap.colorSpace = THREE.LinearSRGBColorSpace;
+      highlight.colorSpace = THREE.LinearSRGBColorSpace;
+      shading.uHighlightMatcap.value = highlight;
+
+      const shell = createRegionMaterial(matcap);
+      const inner = createRegionMaterial(matcap, { inner: true });
+      const overlay = createRegionMaterial(matcap, { inner: true, overlay: true });
+      const model = new THREE.Group();
+      const innerMeshes = [];
+      const outerMeshes = [];
+      const outerBox = new THREE.Box3();
+      const p = new THREE.Vector3();
+      const n = new THREE.Vector3();
+      const normalMatrix = new THREE.Matrix3();
+
+      ATLAS.parts.forEach((part, index) => {
+        const root = files[index].scene;
+        root.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(root);
+        root.traverse((mesh) => {
+          if (!mesh.isMesh) return;
+          const { position, normal } = mesh.geometry.attributes;
+          const count = position.count;
+          const region = new Float32Array(count);
+          if (typeof part.region === 'function') {
+            normalMatrix.getNormalMatrix(mesh.matrixWorld);
+            for (let i = 0; i < count; i++) {
+              p.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld);
+              n.fromBufferAttribute(normal, i).applyMatrix3(normalMatrix).normalize();
+              region[i] = REGION_ID[part.region(p, n, box)];
+            }
+          } else {
+            region.fill(REGION_ID[part.region]);
+          }
+          mesh.geometry.setAttribute('aRegion', new THREE.BufferAttribute(region, 1));
+          mesh.geometry.setAttribute('aOcclusion', new THREE.BufferAttribute(new Float32Array(count).fill(1), 1));
+          mesh.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3).fill(1), 3));
+          mesh.material = part.inner ? (part.overlay ? overlay : inner) : shell;
+          mesh.renderOrder = 0; // outer parts get their order in addSeeThroughPasses
+          (part.inner ? innerMeshes : outerMeshes).push(mesh);
+        });
+        if (!part.inner) outerBox.union(box);
+        if (part.marker) {
+          const dot = new THREE.Mesh(
+            buildEllipsoid(box.getCenter(new THREE.Vector3()), new THREE.Vector3().setScalar(part.marker), REGION_ID[part.region], new THREE.Color(1, 1, 1)),
+            inner,
+          );
+          innerMeshes.push(dot);
+          model.add(dot);
+        }
+        model.add(root);
+      });
+
+      // Centre on the outer brain and scale it to the shared size.
+      const center = outerBox.getCenter(new THREE.Vector3());
+      let radius = 0;
+      for (const mesh of outerMeshes) {
+        const position = mesh.geometry.attributes.position;
+        for (let i = 0; i < position.count; i++) {
+          radius = Math.max(radius, p.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld).distanceTo(center));
+        }
+      }
+      model.position.copy(center).negate();
+      const brain = new THREE.Group();
+      brain.add(model);
+      brain.scale.setScalar(MODEL_RADIUS / radius);
+      const walls = createRegionMaterial(matcap, { wallsOnly: true });
+      const seeThroughMeshes = addSeeThroughPasses(outerMeshes, walls, createDepthOnlyMaterial());
+      brain.userData = { regions: new Set(REGIONS), shellMaterials: [shell], innerMeshes, seeThroughMeshes };
+      return brain;
+    }
+
+    /* =====================================================================
+       PART 3. The generated brain (fallback)
+       Used when the atlas files can't be loaded, for example when the page is
+       opened straight from disk. Every part starts as a simple mesh that is
+       reshaped in code. Axes: +y is up, +z is the front, x runs left to right.
+       ===================================================================== */
+
+    // Height across a fold: 0 at the bottom of a groove, rising to a rounded ridge.
+    const ridge = (distance, halfWidth) => {
+      const u = clamp(distance / halfWidth, 0, 1);
+      return Math.sqrt(u * (2 - u));
+    };
+
+    // Seeded noise, so the folds come out the same on every visit.
+    function seededRandom(seed) {
+      return function random() {
+        seed = (seed + 0x6d2b79f5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const simplex = new SimplexNoise({ random: seededRandom(1848) });
+    const noise = (x, y, z) => simplex.noise3d(x, y, z);
+    const WHITE = new THREE.Color(1, 1, 1);
+
+    function unitSphere(detail) {
+      const sphere = new THREE.IcosahedronGeometry(1, detail);
+      sphere.deleteAttribute('normal');
+      sphere.deleteAttribute('uv');
+      return mergeVertices(sphere); // share vertices so normals come out smooth
+    }
+
+    function distanceToPolyline(px, py, points) {
+      let best = Infinity;
+      for (let i = 0; i < points.length - 1; i++) {
+        const [ax, ay] = points[i];
+        const [bx, by] = points[i + 1];
+        const dx = bx - ax;
+        const dy = by - ay;
+        const t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+        const ex = px - (ax + dx * t);
+        const ey = py - (ay + dy * t);
+        best = Math.min(best, ex * ex + ey * ey);
+      }
+      return Math.sqrt(best);
+    }
+
+    // Linear interpolation through [x, y] points sorted by x.
+    function piecewise(x, points) {
+      if (x <= points[0][0]) return points[0][1];
+      for (let i = 1; i < points.length; i++) {
+        const [x1, y1] = points[i];
+        if (x <= x1) {
+          const [x0, y0] = points[i - 1];
+          return lerp(y0, y1, (x - x0) / (x1 - x0));
+        }
+      }
+      return points[points.length - 1][1];
+    }
+
+    // Length of the surface gradient of a per-vertex value, averaged over the
+    // triangles around each vertex. Dividing a value by it gives the distance
+    // to where the value crosses zero, so grooves come out evenly wide.
+    function surfaceSlope(geometry, values) {
+      const pos = geometry.attributes.position.array;
+      const index = geometry.index.array;
+      const count = values.length;
+      const gx = new Float32Array(count);
+      const gy = new Float32Array(count);
+      const gz = new Float32Array(count);
+      const weight = new Float32Array(count);
+
+      for (let t = 0; t < index.length; t += 3) {
+        const a = index[t];
+        const b = index[t + 1];
+        const c = index[t + 2];
+        const e1x = pos[b * 3] - pos[a * 3];
+        const e1y = pos[b * 3 + 1] - pos[a * 3 + 1];
+        const e1z = pos[b * 3 + 2] - pos[a * 3 + 2];
+        const e2x = pos[c * 3] - pos[a * 3];
+        const e2y = pos[c * 3 + 1] - pos[a * 3 + 1];
+        const e2z = pos[c * 3 + 2] - pos[a * 3 + 2];
+        const nx = e1y * e2z - e1z * e2y;
+        const ny = e1z * e2x - e1x * e2z;
+        const nz = e1x * e2y - e1y * e2x;
+        const nn = nx * nx + ny * ny + nz * nz;
+        if (nn < 1e-20) continue;
+        // gradient = (d1 * (e2 x N) + d2 * (N x e1)) / |N|^2
+        const d1 = (values[b] - values[a]) / nn;
+        const d2 = (values[c] - values[a]) / nn;
+        const area = Math.sqrt(nn);
+        const tx = (d1 * (e2y * nz - e2z * ny) + d2 * (ny * e1z - nz * e1y)) * area;
+        const ty = (d1 * (e2z * nx - e2x * nz) + d2 * (nz * e1x - nx * e1z)) * area;
+        const tz = (d1 * (e2x * ny - e2y * nx) + d2 * (nx * e1y - ny * e1x)) * area;
+        gx[a] += tx; gy[a] += ty; gz[a] += tz; weight[a] += area;
+        gx[b] += tx; gy[b] += ty; gz[b] += tz; weight[b] += area;
+        gx[c] += tx; gy[c] += ty; gz[c] += tz; weight[c] += area;
+      }
+
+      const slope = new Float32Array(count);
+      for (let i = 0; i < count; i++) slope[i] = Math.hypot(gx[i], gy[i], gz[i]) / (weight[i] || 1);
+      return slope;
+    }
+
+    // Sculpting in three passes:
+    //   shape(p)      moves each vertex to form the smooth outline;
+    //   field(p, n)   optional value whose zero lines become grooves;
+    //   surface(...)  turns the distance to the nearest groove into depth,
+    //                 shading, colour and region. Depth pushes inwards.
+    function sculpt(geometry, { shape, field, surface }) {
+      const position = geometry.attributes.position;
+      const count = position.count;
+      const p = new THREE.Vector3();
+      const n = new THREE.Vector3();
+
+      if (shape) {
+        for (let i = 0; i < count; i++) {
+          shape(p.fromBufferAttribute(position, i));
+          position.setXYZ(i, p.x, p.y, p.z);
+        }
+      }
+      geometry.computeVertexNormals();
+      const normal = geometry.attributes.normal;
+
+      const distance = new Float32Array(count).fill(1);
+      if (field) {
+        const values = new Float32Array(count);
+        for (let i = 0; i < count; i++) {
+          values[i] = field(p.fromBufferAttribute(position, i), n.fromBufferAttribute(normal, i), i);
+        }
+        const slope = surfaceSlope(geometry, values);
+        for (let i = 0; i < count; i++) distance[i] = Math.abs(values[i]) / Math.max(slope[i], 1e-6);
+      }
+
+      const colors = new Float32Array(count * 3);
+      const occlusion = new Float32Array(count);
+      const region = new Float32Array(count);
+      const out = { depth: 0, occlusion: 1, region: 0, color: new THREE.Color() };
+      for (let i = 0; i < count; i++) {
+        p.fromBufferAttribute(position, i);
+        n.fromBufferAttribute(normal, i);
+        surface(p, n, distance[i], out, i);
+        position.setXYZ(i, p.x - n.x * out.depth, p.y - n.y * out.depth, p.z - n.z * out.depth);
+        out.color.toArray(colors, i * 3);
+        occlusion[i] = out.occlusion;
+        region[i] = out.region;
+      }
+
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute('aOcclusion', new THREE.BufferAttribute(occlusion, 1));
+      geometry.setAttribute('aRegion', new THREE.BufferAttribute(region, 1));
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    // --- Cerebral hemispheres ------------------------------------------------
+
+    const HEMI = { length: 0.86, top: 0.6, bottom: 0.44, lateral: 0.6, medial: 0.07, gap: 0.016 };
+
+    // Landmark grooves on the side of the brain, as [front-back (z), up-down (y)].
+    const SULCI = {
+      lateral: [[0.47, -0.22], [0.3, -0.15], [0.1, -0.07], [-0.12, -0.02], [-0.28, 0.04], [-0.37, 0.15]], // Sylvian fissure
+      central: [[-0.08, 0.75], [-0.04, 0.52], [0.04, 0.36], [0.07, 0.24], [0.12, 0.12], [0.14, 0.03]],
+      superiorTemporal: [[0.36, -0.33], [0.16, -0.23], [-0.08, -0.15], [-0.34, -0.06]],
+    };
+
+    // Region borders: the lateral fissure (extended backwards) and the central sulcus.
+    const TEMPORAL_TOP = [[-0.9, 0.08], [-0.28, 0.04], [-0.12, -0.02], [0.1, -0.07], [0.3, -0.15], [0.47, -0.22]]; // [z, y]
+    const CENTRAL_BY_HEIGHT = [[-0.4, 0.3], ...SULCI.central.map(([z, y]) => [y, z]).reverse()];                // [y, z]
+
+    function corticalRegionAt(z, y, lateral) {
+      if (z < -0.47 - 0.12 * (y + 0.2)) return REGION_ID.visual; // occipital lobe, home of the visual cortex
+      if (z < 0.47 && y < piecewise(z, TEMPORAL_TOP) && (z < 0.18 || lateral > 0.3)) return REGION_ID.temporal;
+      const central = piecewise(y, CENTRAL_BY_HEIGHT);
+      if (z < central) return REGION_ID.parietal;
+      if (z < central + 0.1) return REGION_ID.motor; // precentral gyrus
+      if (z < central + 0.24) return REGION_ID.premotor;
+      return REGION_ID['prefrontal-lateral'];
+    }
+
+    // Smooth hemisphere: a superellipsoid, flat on the inner (medial) side,
+    // deepest under the temporal lobe and narrower towards both poles.
+    function hemisphereShape(v) {
+      const { x: dx, y: dy, z: dz } = v;
+      const outer = dx >= 0;
+      const p = outer ? 2.3 : 8;
+      const sx = Math.pow(Math.abs(dx), 2 / p);
+      const ring = Math.pow(Math.max(0, 1 - dx * dx), 1 / p);
+      const len = Math.hypot(dy, dz) || 1;
+
+      const z = (dz / len) * ring * HEMI.length;
+      let y = (dy / len) * ring;
+      if (y > 0) {
+        y *= HEMI.top * (1 + 0.06 * Math.exp(-((z + 0.15) ** 2) / 0.12));
+      } else {
+        let depth = 1 - 0.48 * smoothstep(0.3, 0.64, z) - 0.32 * smoothstep(-0.3, -0.8, z);
+        depth *= lerp(0.7, 1, smoothstep(0.05, 0.7, outer ? sx : 0));
+        y *= HEMI.bottom * depth;
+      }
+
+      let x;
+      if (outer) {
+        const taper = 1 - 0.16 * smoothstep(0, 0.86, z) - 0.22 * smoothstep(-0.3, -0.86, z);
+        x = sx * HEMI.lateral * taper;
+      } else {
+        x = -sx * HEMI.medial;
+      }
+      v.set(x + HEMI.medial + HEMI.gap / 2, y, z);
+    }
+
+    function buildHemisphere(side, detail) {
+      const seed = side > 0 ? 0 : 41.7; // each half gets its own fold pattern
+      const geometry = unitSphere(detail);
+      const wobble = new Float32Array(geometry.attributes.position.count * 2);
+
+      sculpt(geometry, {
+        shape: hemisphereShape,
+
+        // Folds: the zero lines of domain-warped noise wind around like sulci.
+        // The noise is stretched front to back, like the frontal and temporal gyri.
+        field(p, n, i) {
+          const f = 5.4;
+          let qx = (p.x + seed) * f;
+          let qy = p.y * f;
+          let qz = p.z * f * 0.75;
+          const a = noise(qx * 0.35 + 3.1, qy * 0.35, qz * 0.35);
+          const b = noise(qx * 0.35, qy * 0.35 + 7.7, qz * 0.35);
+          const c = noise(qx * 0.35, qy * 0.35, qz * 0.35 + 12.3);
+          wobble[i * 2] = a;
+          wobble[i * 2 + 1] = b;
+          qx += a * 1.1;
+          qy += b * 1.1;
+          qz += c * 1.1;
+          return noise(qx, qy, qz) + 0.3 * noise(qx * 2.1 + 5.3, qy * 2.1, qz * 2.1);
+        },
+
+        surface(p, n, foldDistance, out, i) {
+          const { x, y, z } = p;
+          // Bend the landmark lines and region borders so they are not ruler-straight.
+          const wz = z + 0.03 * wobble[i * 2];
+          const wy = y + 0.03 * wobble[i * 2 + 1];
+          const lateral = clamp((x - HEMI.gap / 2) / (HEMI.medial + HEMI.lateral), 0, 1);
+          const onSide = smoothstep(0.1, 0.5, n.x);   // outer surface
+          const notInner = smoothstep(-0.45, 0, n.x); // outer surface and top
+
+          out.depth = Math.max(
+            0.036 * (1 - ridge(foldDistance, 0.05)),
+            0.06 * onSide * (1 - ridge(distanceToPolyline(wz, wy, SULCI.lateral), 0.045)),
+            0.048 * notInner * (1 - ridge(distanceToPolyline(wz, wy, SULCI.central), 0.045)),
+            0.036 * onSide * (1 - ridge(distanceToPolyline(wz, wy, SULCI.superiorTemporal), 0.045)),
+          );
+          // Darken the creases and the inner wall that faces the other hemisphere.
+          const crease = Math.min(out.depth / 0.036, 1);
+          out.occlusion = (1 - 0.7 * Math.pow(crease, 1.6)) * lerp(1, 0.5, smoothstep(-0.5, -0.95, n.x));
+          out.region = corticalRegionAt(wz, wy, lateral);
+          out.color.copy(WHITE);
+        },
+      });
+
+      if (side < 0) mirrorX(geometry);
+      return geometry;
+    }
+
+    function mirrorX(geometry) {
+      const position = geometry.attributes.position;
+      for (let i = 0; i < position.count; i++) position.setX(i, -position.getX(i));
+      const index = geometry.index; // flip triangle winding so faces still point outwards
+      for (let i = 0; i < index.count; i += 3) {
+        const b = index.getX(i + 1);
+        index.setX(i + 1, index.getX(i + 2));
+        index.setX(i + 2, b);
+      }
+      geometry.computeVertexNormals();
+    }
+
+    // --- Cerebellum -----------------------------------------------------------
+
+    function buildCerebellum(detail) {
+      const center = new THREE.Vector3(0, -0.43, -0.5);
+
+      return sculpt(unitSphere(detail), {
+        shape(v) {
+          const { x: dx, y: dy, z: dz } = v;
+          let y = dy * 0.24;
+          let z = dz * 0.31;
+          if (y > 0) y *= 0.72; // flat top, tucked under the occipital lobes
+          const midline = Math.exp(-(dx * dx) / 0.03);
+          z += midline * 0.06 * smoothstep(0.2, -0.8, dz); // notch between the two halves at the back
+          y += midline * 0.04 * smoothstep(0.2, -0.8, dy); // and underneath
+          v.set(dx * 0.5, y, z).add(center);
+        },
+
+        // Folia: fine grooves running across the cerebellum, curving down at its sides.
+        field(p) {
+          const lx = p.x;
+          const ly = p.y - center.y;
+          const lz = p.z - center.z;
+          return Math.sin((ly + 0.25 * lx * lx - 0.12 * lz) * 105 + 1.1 * noise(lx * 4, ly * 4, lz * 4));
+        },
+
+        surface(p, n, distance, out) {
+          const g = 1 - ridge(distance, 0.012);
+          out.depth = 0.012 * g;
+          out.occlusion = 1 - 0.55 * Math.pow(g, 1.5);
+          out.region = REGION_ID.cerebellum;
+          out.color.copy(WHITE);
+        },
+      });
+    }
+
+    // --- Brainstem ------------------------------------------------------------
+
+    function buildBrainstem() {
+      // Outline from the top of the spinal cord up to the midbrain, as [radius, height].
+      const outline = new THREE.SplineCurve([
+        [0, -0.74], [0.06, -0.72], [0.072, -0.6], [0.09, -0.5], [0.112, -0.42],
+        [0.15, -0.32], [0.158, -0.2], [0.125, -0.09], [0.125, 0.04], [0.09, 0.12], [0, 0.14],
+      ].map(([r, h]) => new THREE.Vector2(r, h))).getPoints(60);
+
+      let geometry = new THREE.LatheGeometry(outline, 72);
+      geometry.deleteAttribute('normal');
+      geometry.deleteAttribute('uv');
+      geometry = mergeVertices(geometry);
+      const xAxis = new THREE.Vector3(1, 0, 0);
+
+      return sculpt(geometry, {
+        shape(v) {
+          const pons = Math.exp(-((v.y + 0.25) ** 2) / 0.01);
+          v.z *= lerp(0.82, 1 + 0.5 * pons, smoothstep(-0.05, 0.05, v.z)); // the pons bulges forward
+          v.applyAxisAngle(xAxis, 0.3); // the stem leans back as it descends
+          v.y -= 0.2;
+          v.z -= 0.02;
+        },
+        surface(p, n, distance, out) {
+          const streak = noise(p.x * 9, p.y * 2.2, p.z * 9);
+          out.depth = 0.004 * (1 + streak);
+          out.occlusion = 0.92 + 0.08 * streak;
+          out.region = REGION_ID.brainstem;
+          out.color.copy(WHITE);
+        },
+      });
+    }
+
+    // --- Structures deep inside (visible when the cortex turns see-through) ---
+
+    function solidSurface(region, color) {
+      return (p, n, distance, out) => {
+        out.depth = 0;
+        out.occlusion = 1;
+        out.region = region;
+        out.color.copy(color);
+      };
+    }
+
+    function buildEllipsoid(center, radii, region, color) {
+      return sculpt(unitSphere(10), {
+        shape: (v) => v.multiply(radii).add(center),
+        surface: solidSurface(region, color),
+      });
+    }
+
+    // A tube along a curve; `profile(t)` scales the radius from start (0) to end (1).
+    function buildTube(points, radius, profile, region, color) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const segments = 48;
+      const radial = 14;
+      let geometry = new THREE.TubeGeometry(curve, segments, 1, radial, false);
+      const position = geometry.attributes.position;
+      const center = new THREE.Vector3();
+      const v = new THREE.Vector3();
+      for (let i = 0; i <= segments; i++) {
+        curve.getPointAt(i / segments, center);
+        const r = radius * profile(i / segments);
+        for (let j = 0; j <= radial; j++) {
+          const k = i * (radial + 1) + j;
+          v.fromBufferAttribute(position, k).sub(center).multiplyScalar(r).add(center);
+          position.setXYZ(k, v.x, v.y, v.z);
+        }
+      }
+      geometry.deleteAttribute('normal');
+      geometry.deleteAttribute('uv');
+      geometry = mergeVertices(geometry);
+      return sculpt(geometry, { surface: solidSurface(region, color) });
+    }
+
+    function buildDeepStructures() {
+      const parts = [];
+      for (const side of [1, -1]) {
+        const at = (x, y, z) => new THREE.Vector3(x * side, y, z);
+        const size = (x, y, z) => new THREE.Vector3(x, y, z);
+        parts.push(buildEllipsoid(at(0.022, -0.215, 0.15), size(0.03, 0.03, 0.03), REGION_ID.scn, WHITE));
+        parts.push(buildEllipsoid(at(0.08, -0.115, 0.27), size(0.035, 0.03, 0.045), REGION_ID.accumbens, WHITE));
+        parts.push(buildEllipsoid(at(0.215, -0.255, 0.3), size(0.042, 0.038, 0.048), REGION_ID.amygdala, WHITE));
+        parts.push(buildTube(
+          [at(0.215, -0.265, 0.24), at(0.235, -0.255, 0.12), at(0.24, -0.225, -0.02), at(0.215, -0.16, -0.15), at(0.165, -0.08, -0.22)],
+          0.042, (t) => Math.pow(Math.sin(Math.PI * t), 0.45) * lerp(1, 0.45, t), REGION_ID.hippocampus, WHITE,
+        ));
+        // Default mode network hubs: medial prefrontal cortex and posterior cingulate cortex
+        parts.push(buildEllipsoid(at(0.045, 0.14, 0.53), size(0.035, 0.07, 0.065), REGION_ID['prefrontal-medial'], WHITE));
+        parts.push(buildEllipsoid(at(0.045, 0.17, -0.3), size(0.035, 0.06, 0.06), REGION_ID.pcc, WHITE));
+      }
+      return mergeGeometries(parts);
+    }
+
+    // Builds the parts one at a time, pausing in between so the page stays responsive.
+    async function createGeneratedBrain(detail) {
+      const { matcap, highlight } = fallbackMatcaps();
+      shading.uHighlightMatcap.value = highlight;
+      const shell = createRegionMaterial(matcap);
+      const inner = createRegionMaterial(matcap, { inner: true });
+      const brain = new THREE.Group();
+      const innerMeshes = [];
+      const outerMeshes = [];
+      const parts = [
+        [() => buildHemisphere(1, detail), shell],
+        [() => buildHemisphere(-1, detail), shell],
+        [() => buildCerebellum(Math.round(detail * 0.65)), shell],
+        [() => buildBrainstem(), shell],
+        [() => buildDeepStructures(), inner],
+      ];
+      for (const [build, material] of parts) {
+        const mesh = new THREE.Mesh(build(), material);
+        mesh.renderOrder = 0;
+        (material === inner ? innerMeshes : outerMeshes).push(mesh);
+        brain.add(mesh);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      brain.position.y = 0.135; // put the middle of the whole model on the rotation axis
+      const walls = createRegionMaterial(matcap, { wallsOnly: true });
+      const seeThroughMeshes = addSeeThroughPasses(outerMeshes, walls, createDepthOnlyMaterial());
+      brain.userData = { regions: new Set(REGIONS), shellMaterials: [shell], innerMeshes, seeThroughMeshes };
+      return brain;
+    }
+
+    /* =====================================================================
+       PART 4. Scene
+       One render pass straight to the canvas, with the browser's antialiasing.
+       Film grain is added in the shader (PART 1) and on the page background.
+       ===================================================================== */
+
+    const visual = document.getElementById('brainVisual');
+    const canvas = document.getElementById('brainCanvas');
+    const loaderText = document.getElementById('brainLoader');
+    const timeline = document.querySelector('.timeline');
+    const stepsContainer = document.querySelector('.steps');
+    const steps = Array.from(document.querySelectorAll('.step'));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let renderer = null;
+    try {
+      // Drawn straight to a transparent canvas, so the page background (paper,
+      // grain and a soft light behind the brain) shows through.
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch (error) {
+      visual.classList.add('is-unsupported');
+      loaderText.textContent = 'Twoja przeglądarka nie wyświetli modelu 3D, ale możesz czytać dalej.';
+    }
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+    const pivot = new THREE.Group(); // the scroll rotates this
+    scene.add(pivot);
+    let brain = null;
+
+    if (renderer) {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 0);
+      // Filmic tone mapping, as in the Neurotorium atlas: softer, less saturated colours.
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1;
+    }
+
+    /* =====================================================================
+       PART 5. Scroll drives the model and the timeline
+       Each .step is a keyframe. The scroll position becomes a continuous
+       step index (2.5 = halfway between the third and fourth step); the
+       rotation, colours and time of day are interpolated from it.
+       ===================================================================== */
+
+    const regionColors = Object.fromEntries(
+      [...REGIONS, ...Object.keys(GROUPS)].map((name) => [name, new THREE.Color(cssVar(`--c-${name}`))]),
+    );
+    const SPIN_OUTSIDE = THREE.MathUtils.degToRad(35); // keeps turning before the first and after the last step
+    let keyframes = [];
+    let spinDirection = -1;
+
+    function parseTime(text) {
+      const [hours, minutes = '0'] = String(text).split(':');
+      return Number(hours) + Number(minutes) / 60;
+    }
+
+    function readKeyframes(available) {
+      let previousTime = -Infinity;
+      keyframes = steps.map((step) => {
+        const weights = REGIONS.map(() => 0);
+        const colors = REGIONS.map((name) => regionColors[name]);
+        let wash = 0;
+        let deep = false;
+
+        for (const token of (step.dataset.highlight || '').split(/\s+/).filter(Boolean)) {
+          const [name, value] = token.split(':');
+          const strength = value === undefined ? 1 : clamp(Number(value), 0, 1);
+          if (name === 'glymphatic') {
+            wash = strength;
+            continue;
+          }
+          const members = (GROUPS[name] || [name]).filter((member) => available.has(member));
+          if (!members.length) continue;
+          for (const member of members) {
+            const id = REGION_ID[member];
+            weights[id] = Math.max(weights[id], strength);
+            if (GROUPS[name]) colors[id] = regionColors[name]; // a group is drawn in one colour
+            if (DEEP.has(member)) deep = true;
+          }
+        }
+
+        let time = parseTime(step.dataset.time ?? '0');
+        while (time < previousTime) time += 24; // after midnight: keep counting up through the night
+        previousTime = time;
+
+        return {
+          yaw: THREE.MathUtils.degToRad(Number(step.dataset.yaw) || 0),
+          pitch: THREE.MathUtils.degToRad(Number(step.dataset.pitch) || 0),
+          zoom: Number(step.dataset.zoom) || 1,
+          focus: weights.some((w) => w > 0) ? 1 : 0,
+          ghost: step.dataset.ghost !== undefined ? Number(step.dataset.ghost) : deep ? 1 : 0,
+          wash,
+          time,
+          weights,
+          colors,
+        };
+      });
+      spinDirection = Math.sign(keyframes.at(-1).yaw - keyframes[0].yaw) || -1;
+      buildTimeline(keyframes[0].time);
+    }
+
+    let stepCenters = [];
+    function measureSteps() {
+      stepCenters = steps.map((step) => {
+        const rect = step.getBoundingClientRect();
+        return rect.top + window.scrollY + rect.height / 2;
+      });
+    }
+
+    function scrollIndex() {
+      const anchor = window.scrollY + window.innerHeight / 2;
+      const c = stepCenters;
+      const last = c.length - 1;
+      if (last < 1) return 0;
+      if (anchor <= c[0]) return (anchor - c[0]) / (c[1] - c[0]);
+      for (let i = 0; i < last; i++) {
+        if (anchor < c[i + 1]) return i + (anchor - c[i]) / (c[i + 1] - c[i]);
+      }
+      return last + (anchor - c[last]) / (c[last] - c[last - 1]);
+    }
+
+    const makeState = () => ({
+      yaw: 0, pitch: 0, zoom: 1, focus: 0, ghost: 0, wash: 0, time: 0, current: 0,
+      weights: REGIONS.map(() => 0),
+      colors: REGIONS.map(() => new THREE.Color()),
+    });
+
+    function sample(index, out) {
+      const last = keyframes.length - 1;
+      if (last < 0) return out;
+      if (index <= 0 || index >= last) {
+        const k = index <= 0 ? keyframes[0] : keyframes[last];
+        const overshoot = index <= 0 ? index : index - last;
+        out.yaw = k.yaw + spinDirection * overshoot * SPIN_OUTSIDE;
+        out.pitch = k.pitch;
+        out.zoom = k.zoom;
+        out.focus = k.focus;
+        out.ghost = k.ghost;
+        out.wash = k.wash;
+        out.time = k.time;
+        out.current = index <= 0 ? 0 : last;
+        for (let r = 0; r < N; r++) {
+          out.weights[r] = k.weights[r];
+          out.colors[r].copy(k.colors[r]);
+        }
+        return out;
+      }
+      const i = Math.floor(index);
+      const t = index - i;
+      const a = keyframes[i];
+      const b = keyframes[i + 1];
+      const move = smoothstep(0, 1, t);     // the model eases in and out of each view
+      const fade = smoothstep(0.3, 0.7, t); // colours switch around the halfway point
+      out.yaw = lerp(a.yaw, b.yaw, move);
+      out.pitch = lerp(a.pitch, b.pitch, move);
+      out.zoom = lerp(a.zoom, b.zoom, move);
+      out.focus = lerp(a.focus, b.focus, fade);
+      out.ghost = lerp(a.ghost, b.ghost, fade);
+      out.wash = lerp(a.wash, b.wash, fade);
+      out.time = lerp(a.time, b.time, t);   // the timeline runs steadily with the scroll
+      out.current = fade < 0.5 ? i : i + 1;
+      for (let r = 0; r < N; r++) {
+        out.weights[r] = lerp(a.weights[r], b.weights[r], fade);
+        // A region lit in only one of the two steps keeps that step's colour;
+        // a region lit in both (e.g. DMN hubs, then the whole cortex) blends between them.
+        const from = a.weights[r] > 0 ? a.colors[r] : b.colors[r];
+        const to = b.weights[r] > 0 ? b.colors[r] : a.colors[r];
+        out.colors[r].lerpColors(from, to, fade);
+      }
+      return out;
+    }
+
+    // --- Timeline: a progress bar over 24 hours with a moving sun -----------------
+
+    const timelineTime = timeline.querySelector('.timeline__time');
+    const timelineSun = timeline.querySelector('.timeline__sun');
+    const timelineMoon = timeline.querySelector('.timeline__moon');
+    let timelineStart = 0;
+
+    function buildTimeline(startHours) {
+      timelineStart = startHours;
+      const ticks = timeline.querySelector('.timeline__ticks');
+      ticks.replaceChildren();
+      for (let h = 0; h <= 24; h += 3) {
+        const tick = document.createElement('span');
+        tick.style.left = `${(h / 24) * 100}%`;
+        tick.textContent = `${Math.round(startHours + h) % 24}:00`;
+        if (h % 6) tick.classList.add('is-minor');
+        ticks.append(tick);
+      }
+    }
+
+    let shownMinute = -1;
+    function updateTimeline(hours) {
+      timeline.style.setProperty('--p', clamp((hours - timelineStart) / 24, 0, 1).toFixed(4));
+      const clock = ((hours % 24) + 24) % 24;
+      const daylight = smoothstep(5.5, 7, clock) * (1 - smoothstep(19, 20.5, clock));
+      timelineSun.style.opacity = daylight.toFixed(3);
+      timelineMoon.style.opacity = (1 - daylight).toFixed(3);
+      const minute = (Math.round(clock * 12) * 5) % 1440; // shown in 5-minute steps
+      if (minute !== shownMinute) {
+        shownMinute = minute;
+        timelineTime.textContent = `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+      }
+    }
+
+    // Highlighted words in the text take the colour of their structure on the model.
+    document.querySelectorAll('.step-text mark[data-token]').forEach((mark) => {
+      mark.style.setProperty('--mark', `var(--c-${mark.dataset.token})`);
+    });
+
+    // --- Layout and render loop -------------------------------------------------
+
+    // Fit the model into the free space: below the timeline, right of the cards on
+    // wide screens and in the upper part of the screen on phones.
+    let baseDistance = 4;
+    let canvasSize = '';
+    function layout() {
+      measureSteps();
+      const width = visual.clientWidth;
+      const height = visual.clientHeight;
+      if (!renderer || !width || !height) return;
+      // Phones fire resize events while the address bar slides; resizing the
+      // canvas to the same size would still clear and reallocate it.
+      if (canvasSize !== `${width}x${height}`) {
+        canvasSize = `${width}x${height}`;
+        renderer.setSize(width, height, false);
+      }
+      camera.aspect = width / height;
+
+      const card = document.querySelector('.step-text');
+      const cardRight = card ? card.getBoundingClientRect().right : 0;
+      const sideBySide = cardRight > 0 && cardRight < width * 0.55;
+      const freeLeft = sideBySide ? cardRight : 0;
+      const freeTop = timeline.getBoundingClientRect().bottom - visual.getBoundingClientRect().top + (sideBySide ? 8 : 30);
+      const centerX = freeLeft + (width - freeLeft) / 2;
+      const centerY = sideBySide ? freeTop + (height - freeTop) / 2 : freeTop + (height - freeTop) * 0.36;
+      camera.setViewOffset(width, height, width / 2 - centerX, height / 2 - centerY, width, height);
+      camera.updateProjectionMatrix();
+
+      const halfSpace = Math.min((width - freeLeft) / 2, centerY - freeTop, height - centerY);
+      const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      baseDistance = (MODEL_RADIUS * height) / (2 * tanHalfFov * halfSpace * 0.9);
+
+      // Centre of the soft light behind the brain (shared with the timeline header).
+      visual.parentElement.style.setProperty('--brain-x', `${centerX}px`);
+      visual.parentElement.style.setProperty('--brain-y', `${centerY}px`);
+      needsRender = true;
+    }
+
+    const state = makeState();
+    const target = makeState();
+    const pointer = { x: 0, y: 0 };
+    const parallax = { x: 0, y: 0 };
+    let needsRender = true;
+    let onScreen = false;
+    let lastTime = performance.now();
+
+    if (!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      window.addEventListener('pointermove', (event) => {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = (event.clientY / window.innerHeight) * 2 - 1;
+      }, { passive: true });
+    }
+
+    function approach(object, key, goal, k) {
+      const value = object[key];
+      const next = Math.abs(goal - value) < 1e-4 ? goal : lerp(value, goal, k);
+      object[key] = next;
+      return Math.abs(next - value);
+    }
+
+    function tick(now) {
+      requestAnimationFrame(tick);
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      if (!onScreen && !needsRender) return;
+
+      sample(scrollIndex(), target);
+      const k = reduceMotion ? 1 : 1 - Math.exp(-dt * 6); // smoothing towards the scroll target
+      let change = 0;
+      for (const key of ['yaw', 'pitch', 'zoom', 'focus', 'ghost', 'wash']) change += approach(state, key, target[key], k);
+      for (let r = 0; r < N; r++) change += approach(state.weights, r, target.weights[r], k);
+      change += approach(parallax, 'x', pointer.x, k * 0.5);
+      change += approach(parallax, 'y', pointer.y, k * 0.5);
+      const clockChange = approach(state, 'time', target.time, reduceMotion ? 1 : 1 - Math.exp(-dt * 10));
+      if (clockChange > 0 || needsRender) updateTimeline(state.time);
+
+      const flowing = state.wash > 0.001 && !reduceMotion;
+      if (!brain || (change < 1e-5 && !needsRender && !flowing)) {
+        needsRender = false;
+        return;
+      }
+      needsRender = false;
+
+      pivot.rotation.set(state.pitch + parallax.y * 0.06, state.yaw + parallax.x * 0.12, 0);
+      camera.position.set(0, 0, baseDistance / state.zoom);
+      shading.uFocus.value = state.focus;
+      shading.uGhost.value = state.ghost;
+      shading.uWash.value = state.wash;
+      shading.uTime.value = now / 1000;
+      for (let r = 0; r < N; r++) {
+        shading.uRegionWeights.value[r] = state.weights[r];
+        shading.uRegionColors.value[r].copy(target.colors[r]);
+      }
+      // See-through cortex: the extra passes keep it a single surface (see addSeeThroughPasses).
+      const seeThrough = state.ghost > 0.01;
+      for (const material of brain.userData.shellMaterials) material.depthWrite = !seeThrough;
+      for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = seeThrough;
+      pivot.updateMatrixWorld();
+      shading.uBrainInverse.value.copy(pivot.matrixWorld).invert();
+      renderer.render(scene, camera);
+    }
+
+    function start(available) {
+      readKeyframes(available);
+      layout();
+      sample(scrollIndex(), state); // start at the current scroll position, no swoop
+      updateTimeline(state.time);
+      requestAnimationFrame(tick);
+    }
+
+    new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      needsRender = true;
+    }, { rootMargin: '25% 0px' }).observe(visual.parentElement);
+    new ResizeObserver(layout).observe(visual);
+    new ResizeObserver(measureSteps).observe(stepsContainer);
+    window.addEventListener('resize', layout);
+    document.fonts?.ready.then(layout);
+
+    if (renderer) {
+      (async () => {
+        performance.mark('brain-build-start');
+        if (location.protocol !== 'file:') {
+          try {
+            brain = await loadAtlas();
+          } catch (error) {
+            console.warn('Could not load the Neurotorium atlas; showing the generated brain instead.', error);
+          }
+        }
+        if (!brain) {
+          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))); // let the intro paint first
+          brain = await createGeneratedBrain(window.matchMedia('(max-width: 760px)').matches ? 72 : 100);
+        }
+        pivot.add(brain);
+        performance.measure('brain-build', 'brain-build-start');
+        start(brain.userData.regions);
+        // Compile every shader now, including the see-through passes, so the first fade doesn't stall.
+        for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = true;
+        renderer.compile(scene, camera);
+        for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = false;
+        needsRender = true;
+        visual.classList.add('is-ready');
+      })();
+    } else {
+      start(new Set(REGIONS)); // no 3D, but the timeline still follows the text
+    }
+  </script>
+</body>
+</html>
