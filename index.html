@@ -51,6 +51,7 @@
       --c-brainstem: #5f97a3;
       --c-hypothalamus: #6f8fc0;
       --c-scn: #e59b25;
+      --c-pineal: #a8609c;
       --c-accumbens: #c27b8b;
       --c-hippocampus: #3f9a86;
       --c-amygdala: #c9574b;
@@ -341,6 +342,17 @@
       box-decoration-break: clone;
     }
 
+    /* ---------- Note below the graphic ---------- */
+
+    .note {
+      max-width: 40rem;
+      margin: 0;
+      padding: 10vh max(24px, 6vw) 14vh;
+      font: 400 15px/1.55 var(--sans);
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
     /* ---------- Phones: brain on top, text slides up from the bottom ---------- */
 
     @media (max-width: 760px) {
@@ -447,10 +459,11 @@
           data-time       time of day when the text is centred (HH:MM). The timeline runs
                           from the first step's time to 24 hours later; times after
                           midnight continue the same night.
-          data-highlight  what lights up, separated by spaces. Optional strength after a colon, e.g. "prefrontal:0.45".
+          data-highlight  what lights up, separated by spaces. Optional strength after a colon, e.g.
+                          "prefrontal:0.45": the structure keeps its shape in a paler colour.
                           Names: prefrontal, premotor, motor, parietal, temporal, occipital,
                           visual, cingulate, pcc, prefrontal-medial, cerebellum, brainstem,
-                          hypothalamus, scn, accumbens, hippocampus, amygdala, plus the
+                          hypothalamus, scn, pineal, accumbens, hippocampus, amygdala, plus the
                           groups "dmn" and "neocortex" and "glymphatic" (a wave washing
                           through the brain). Structures inside the brain make the cortex
                           see-through automatically.
@@ -471,57 +484,65 @@
 
         <section class="step" data-time="07:00" data-highlight="scn hypothalamus" data-yaw="-48" data-pitch="-8" data-zoom="1.25">
           <div class="step-text">
-            <p><mark data-token="scn">Jądro nadskrzyżowaniowe (SCN)</mark> to główny biologiczny zegar organizmu zlokalizowany w <mark data-token="hypothalamus">podwzgórzu</mark>. Rano, pod wpływem światła docierającego do siatkówki oka, SCN wykazuje najwyższą częstotliwość wyładowań elektrycznych. Hamuje wydzielanie melatoniny i wysyła sygnał do pobudzenia układu współczulnego.</p>
-            <p>U większości osób najwyższa wydajność funkcji wykonawczych i analitycznych przypada na późny ranek, jednak godziny szczytu różnią się w zależności od chronotypu.</p>
+            <p><mark data-token="scn">Jądro nadskrzyżowaniowe</mark> to główny biologiczny zegar organizmu zlokalizowany w <mark data-token="hypothalamus">podwzgórzu</mark>. Jego neurony są najaktywniejsze w ciągu dnia. Poranne światło docierające przez siatkówkę każdego dnia nastawia ten zegar, hamuje wydzielanie melatoniny i przygotowuje organizm do aktywności.</p>
           </div>
         </section>
 
         <section class="step" data-time="10:00" data-highlight="prefrontal" data-yaw="-62" data-pitch="10" data-zoom="1.08">
           <div class="step-text">
-            <p><mark data-token="prefrontal">Kora przedczołowa</mark> odpowiada za myślenie analityczne, planowanie, pamięć roboczą i podejmowanie decyzji. Zgodnie z badaniami neuroobrazowaniowymi u większości osób jej metabolizm i wydajność osiągają szczyt w ciągu pierwszych kilku godzin po pełnym rozbudzeniu.</p>
+            <p><mark data-token="prefrontal">Kora przedczołowa</mark> odpowiada za planowanie, pamięć roboczą i podejmowanie decyzji. Sprawność tych funkcji zależy od pory dnia i od tego, ile godzin minęło od przebudzenia. U osób o pośrednim chronotypie zwykle jest ona najwyższa przed południem, jednak u „sów” – trochę później.</p>
           </div>
         </section>
 
         <section class="step" data-time="12:45" data-highlight="accumbens" data-yaw="-80" data-pitch="4" data-zoom="1.12">
           <div class="step-text">
-            <p>W tych godzinach naturalnie spada czujność i skupienie na trudnych zadaniach, ale wzrasta podatność na poszukiwanie nagrody i interakcje społeczne.</p>
-            <p>Badania pokazują, że reaktywność <mark data-token="accumbens">jądra półleżącego</mark> na bodźce nagradzające wykazuje rytmikę dobową ze specyficznymi wahaniami w godzinach popołudniowych i wieczornych, stąd w tych godzinach mamy większą motywację do kontaktów społecznych i szukania przyjemności.</p>
+            <p>Układ nagrody, do którego należy <mark data-token="accumbens">jądro półleżące</mark>, to zbiór struktur mózgowych odpowiedzialnych za motywację, uczenie się zachowań ukierunkowanych na cel oraz odczuwanie przyjemności. On również ma rytm dobowy.</p>
+            <p>Deklarowane samopoczucie pozytywne (dobry nastrój, energia) zwykle osiąga szczyt po południu. Paradoksalnie jednak w badaniu z użyciem rezonansu magnetycznego na 16 młodych mężczyznach mózg reagował na nagrodę najsłabiej około 14:00, a silniej rano i wieczorem. Badacze tłumaczą, że mózg mocniej reaguje na przyjemności, których się nie spodziewa.</p>
           </div>
         </section>
 
-        <section class="step" data-time="14:15" data-highlight="prefrontal:0.45" data-yaw="-100" data-pitch="14" data-zoom="1.04">
+        <section class="step" data-time="14:15" data-highlight="prefrontal:0.55" data-yaw="-86" data-pitch="10" data-zoom="1.08">
           <div class="step-text">
-            <p>Spada aktywność <mark data-token="prefrontal">kory przedczołowej</mark>. Wzrost ciśnienia sennego nakłada się na dobowy spadek temperatury ciała, co prowadzi do chwilowego obniżenia metabolizmu w obszarach asocjacyjnych kory mózgowej. Następuje naturalny spadek czujności i funkcji poznawczych związany z rytmem dobowym i presją snu.</p>
+            <p>W <mark data-token="prefrontal">korze przedczołowej</mark> obserwujemy spadek aktywności. Może objawiać się to przejściowym spadkiem czujności i zdolności skupienia. Dołek ma źródło w rytmie dobowym. Może wystąpić także bez obiadu, nawet gdy ktoś nie wie, która jest godzina, ale posiłek bogaty w węglowodany go nasila.</p>
           </div>
         </section>
 
         <section class="step" data-time="17:00" data-highlight="motor" data-yaw="-135" data-pitch="40" data-zoom="1.04">
           <div class="step-text">
-            <p>Organizm osiąga najwyższą temperaturę ciała, a <mark data-token="motor">kora ruchowa</mark> wykazuje najwyższą pobudliwość, co w badaniach nad TMS – przezczaszkową stymulacją magnetyczną – przekłada się na najkrótszy czas reakcji i najlepszą koordynację fizyczną.</p>
+            <p><mark data-token="motor">Kora ruchowa</mark> odpowiada za planowanie, kontrolę oraz realizację świadomych ruchów mięśni szkieletowych. U wielu osób późne popołudnie to pora najkrótszego czasu reakcji i najlepszej koordynacji.</p>
+            <p>U poddanych badaniu sportowców szczyt formy zależał jednak bardziej od tego, ile godzin minęło od przebudzenia, niż od godziny na zegarze, a różnice w ciągu dnia sięgały 26%.</p>
           </div>
         </section>
 
-        <section class="step" data-time="19:15" data-highlight="prefrontal-medial pcc" data-yaw="-172" data-pitch="26" data-zoom="1.06">
+        <section class="step" data-time="19:00" data-highlight="prefrontal-medial pcc" data-yaw="-172" data-pitch="26" data-zoom="1.06">
           <div class="step-text">
-            <p>Pod koniec dnia, gdy spada ścisła kontrola egzekutywna kory przedczołowej, częściej aktywuje się <mark data-token="dmn">sieć spoczynkowa (DMN)</mark>. U części osób może sprzyjać to myśleniu nieprzetartymi szlakami, łączeniu odległych faktów i kreatywności.</p>
+            <p><mark data-token="dmn">Sieć DMN</mark> (ang. default mode network), do której należą m.in. przyśrodkowa kora przedczołowa i tylna kora obręczy, to zintegrowana sieć obszarów mózgu, która wykazuje najwyższą aktywność, gdy organizm nie jest zaangażowany w wykonywanie konkretnego zadania nastawionego na świat zewnętrzny. Wtedy zaczynamy błądzić myślami, wykazujemy skłonność do głębszych refleksji.</p>
+            <p>Badania pokazują, że w porze dla nas nieoptymalnej (dla „skowronka” wieczorem, a dla „sowy” wczesnym rankiem) łatwiej o nieoczywiste skojarzenia. Jednak odpowiedzialność sieci DMN za naszą kreatywność to na razie hipoteza.</p>
           </div>
         </section>
 
-        <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:0.35" data-yaw="-215" data-pitch="8" data-zoom="1.08">
+        <section class="step" data-time="21:00" data-highlight="pineal" data-yaw="-205" data-pitch="14" data-zoom="1.25">
           <div class="step-text">
-            <p>W fazie wolnofalowej (NREM) <mark data-token="hippocampus">hipokamp</mark> „odgrywa” ślady pamięciowe z minionego dnia i przesyła je do <mark data-token="neocortex">kory nowej</mark> w celu trwałego zapamiętania. Następuje tzw. konsolidacja pamięci.</p>
+            <p><mark data-token="pineal">Szyszynka</mark> pełni kluczową rolę w synchronizacji organizmu z cyklem światła i ciemności. Na sygnał zegara biologicznego zaczyna wydzielać melatoninę, hormon „biologicznej nocy”. W przyciemnionym świetle dzieje się to średnio około dwóch godzin przed zwykłą porą snu.</p>
+            <p>Już zwykłe oświetlenie pokojowe wieczorem może opóźniać i skracać wydzielanie melatoniny. Wielogodzinne korzystanie z jasnych ekranów krótko przed snem działa podobnie.</p>
           </div>
         </section>
 
-        <section class="step" data-time="02:30" data-highlight="glymphatic" data-yaw="-245" data-pitch="12" data-zoom="1">
+        <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:0.35" data-yaw="-225" data-pitch="8" data-zoom="1.08">
           <div class="step-text">
-            <p>Badania sugerują, że podczas głębokiego snu wzrasta przepływ płynu mózgowo-rdzeniowego i aktywność <mark data-token="glymphatic">układu glimfatycznego</mark> odpowiedzialnego za usuwanie produktów przemiany materii z mózgu.</p>
+            <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w <mark data-token="neocortex">korze nowej</mark>. To tzw. konsolidacja pamięci.</p>
           </div>
         </section>
 
-        <section class="step" data-time="04:45" data-highlight="amygdala visual" data-yaw="-285" data-pitch="2" data-zoom="1.06">
+        <section class="step" data-time="02:30" data-highlight="glymphatic" data-yaw="-255" data-pitch="12" data-zoom="1">
           <div class="step-text">
-            <p>Podczas fazy REM aktywność <mark data-token="amygdala">ciała migdałowatego</mark> oraz <mark data-token="visual">kory wzrokowej</mark> jest niemal tak wysoka jak na jawie (stąd wyraziste sny), podczas gdy aktywność grzbietowo-bocznej kory przedczołowej jest wyraźnie obniżona, co może tłumaczyć ograniczoną kontrolę logiczną i krytyczną ocenę wydarzeń sennych.</p>
+            <p><mark data-token="glymphatic">Układ glimfatyczny</mark> to sieć przestrzeni wokół naczyń krwionośnych, którymi płyn mózgowo-rdzeniowy przepływa przez tkankę mózgu. Badania sugerują, że w głębokim śnie rośnie przepływ tego płynu, co może sprzyjać usuwaniu produktów przemiany materii. Mechanizm wciąż jest przedmiotem dyskusji naukowej.</p>
+          </div>
+        </section>
+
+        <section class="step" data-time="04:45" data-highlight="amygdala visual" data-yaw="-290" data-pitch="2" data-zoom="1.06">
+          <div class="step-text">
+            <p>Podczas fazy REM aktywność <mark data-token="amygdala">ciała migdałowatego</mark> oraz <mark data-token="visual">kory wzrokowej</mark> jest bardzo wysoka, stąd wyraziste sny. Aktywność grzbietowo-bocznej kory przedczołowej natomiast jest wyraźnie obniżona, co może tłumaczyć ograniczoną kontrolę logiczną i krytyczną ocenę wydarzeń sennych. Sen REM przeważa w drugiej połowie nocy.</p>
           </div>
         </section>
 
@@ -532,6 +553,8 @@
         </section>
       </div>
     </section>
+
+    <p class="note">Do grafiki wybraliśmy obszary mózgu, które są warte podkreślenia o danej porze dnia. Nie oznacza to, że inne obszary nie są w tym czasie aktywne. Godziny dotyczą osób o pośrednim chronotypie. U „skowronków” procesy te zachodzą wcześniej, u „sów” później.</p>
   </main>
 
   <script type="module">
@@ -550,7 +573,7 @@
     const REGIONS = [
       'prefrontal-lateral', 'prefrontal-medial', 'premotor', 'motor', 'parietal', 'temporal',
       'occipital', 'visual', 'cingulate', 'pcc', 'cortex', 'cerebellum', 'brainstem',
-      'hypothalamus', 'scn', 'accumbens', 'hippocampus', 'amygdala',
+      'hypothalamus', 'scn', 'pineal', 'accumbens', 'hippocampus', 'amygdala',
     ];
     const REGION_ID = Object.fromEntries(REGIONS.map((name, i) => [name, i]));
     const N = REGIONS.length;
@@ -561,7 +584,7 @@
         'occipital', 'cingulate', 'pcc', 'cortex'],
     };
     // Highlighting any of these makes the outer cortex see-through.
-    const DEEP = new Set(['hypothalamus', 'scn', 'accumbens', 'hippocampus', 'amygdala', 'pcc']);
+    const DEEP = new Set(['hypothalamus', 'scn', 'pineal', 'accumbens', 'hippocampus', 'amygdala', 'pcc']);
     // Cortex on the inner walls between the hemispheres: when highlighted, it is drawn
     // in front of the see-through outer surface so it stays visible.
     const WALLS = new Set(['prefrontal-medial', 'pcc']);
@@ -605,6 +628,7 @@
         { code: '1.1.3.1.0', name: 'Primary visual cortex', region: 'visual', inner: true, overlay: true },
         { code: '3.2.0.0.0', name: 'Hypothalamus', region: 'hypothalamus', inner: true },
         { code: '3.2.4.0.0', name: 'Suprachiasmatic nucleus', region: 'scn', inner: true, marker: 0.28 },
+        { code: '3.1.1.0.0', name: 'Pineal gland', region: 'pineal', inner: true },
         { code: '1.1.10.0.0', name: 'Nucleus accumbens', region: 'accumbens', inner: true },
         { code: '1.1.4.3.3', name: 'Hippocampus proper', region: 'hippocampus', inner: true },
         { code: '1.1.4.3.2', name: 'Dentate gyrus', region: 'hippocampus', inner: true },
@@ -1348,6 +1372,7 @@
         parts.push(buildEllipsoid(at(0.045, 0.14, 0.53), size(0.035, 0.07, 0.065), REGION_ID['prefrontal-medial'], WHITE));
         parts.push(buildEllipsoid(at(0.045, 0.17, -0.3), size(0.035, 0.06, 0.06), REGION_ID.pcc, WHITE));
       }
+      parts.push(buildEllipsoid(new THREE.Vector3(0, -0.05, -0.2), new THREE.Vector3(0.022, 0.024, 0.032), REGION_ID.pineal, WHITE));
       return mergeGeometries(parts);
     }
 
@@ -1461,6 +1486,17 @@
             if (GROUPS[name]) colors[id] = regionColors[name]; // a group is drawn in one colour
             if (DEEP.has(member)) deep = true;
           }
+        }
+
+        // With the cortex solid, a weaker highlight keeps the full shape and turns
+        // paler instead, so the same structure at two strengths reads as one shape.
+        if (!deep) {
+          weights.forEach((weight, id) => {
+            if (weight <= 0 || weight >= 1) return;
+            // mixed in sRGB, like color-mix() on the highlighted word
+            colors[id] = colors[id].clone().convertLinearToSRGB().lerp(WHITE, 1 - weight).convertSRGBToLinear();
+            weights[id] = 1;
+          });
         }
 
         let time = parseTime(step.dataset.time ?? '0');
@@ -1588,9 +1624,16 @@
       }
     }
 
-    // Highlighted words in the text take the colour of their structure on the model.
+    // Highlighted words in the text take the colour of their structure on the model,
+    // paler when the step gives that structure a strength below 1.
     document.querySelectorAll('.step-text mark[data-token]').forEach((mark) => {
-      mark.style.setProperty('--mark', `var(--c-${mark.dataset.token})`);
+      const token = (mark.closest('.step')?.dataset.highlight || '').split(/\s+/)
+        .map((entry) => entry.split(':'))
+        .find(([name]) => name === mark.dataset.token);
+      const strength = token?.[1] === undefined ? 1 : clamp(Number(token[1]), 0, 1);
+      mark.style.setProperty('--mark', strength < 1
+        ? `color-mix(in srgb, var(--c-${mark.dataset.token}) ${Math.round(strength * 100)}%, #fff)`
+        : `var(--c-${mark.dataset.token})`);
     });
 
     // --- Layout and render loop -------------------------------------------------

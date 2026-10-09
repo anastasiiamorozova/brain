@@ -1,7 +1,7 @@
 # 24 godziny z życia mózgu
 A 3D brain built from the Neurotorium atlas models 
 
-26 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
+27 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
 | `textures/matcaps/` | The two matcap images the Neurotorium atlas uses |
 
 ## Edit the story
@@ -11,12 +11,12 @@ Each `<section class="step">` is one card and one keyframe.
 | Attribute | Effect |
 |---|---|
 | `data-time` | Time of day when the card is centred, as `HH:MM`. The bar spans 24 hours from the first card's time. Times after midnight continue the same night. |
-| `data-highlight` | What lights up, separated by spaces. Add a strength after a colon, for example `prefrontal:0.45`. |
+| `data-highlight` | What lights up, separated by spaces. Add a strength after a colon, for example `prefrontal:0.55`. The structure keeps its full shape in a paler colour, and its word in the text turns paler too. In steps where the cortex turns see-through, a strength makes the structure fainter instead. |
 | `data-yaw` | Turn in degrees; 0 means the face points at the reader. Keep values going one way for a continuous turn. |
 | `data-pitch` | Tilt in degrees. Positive shows the top, negative the underside. |
 | `data-zoom` | 1 fits the screen; 1.2 is 20% closer. |
 
-Highlight names: `prefrontal`, `premotor`, `motor`, `parietal`, `temporal`, `occipital`, `visual`, `cingulate`, `pcc`, `cerebellum`, `brainstem`, `hypothalamus`, `scn`, `accumbens`, `hippocampus`, `amygdala`. Groups: `dmn` is the medial prefrontal cortex plus the posterior cingulate cortex, and `neocortex` is the whole cortex. `glymphatic` runs a fluid wave over the brain. Structures inside the brain make the cortex see-through automatically.
+Highlight names: `prefrontal`, `premotor`, `motor`, `parietal`, `temporal`, `occipital`, `visual`, `cingulate`, `pcc`, `cerebellum`, `brainstem`, `hypothalamus`, `scn`, `pineal`, `accumbens`, `hippocampus`, `amygdala`. Groups: `dmn` is the medial prefrontal cortex plus the posterior cingulate cortex, and `neocortex` is the whole cortex. `glymphatic` runs a fluid wave over the brain. Structures inside the brain make the cortex see-through automatically.
 
 In the text, wrap a structure's name in `<mark data-token="hippocampus">…</mark>`. The word gets the same colour as the structure on the model, which is how readers match the two.
 
@@ -29,7 +29,7 @@ The list of parts is `ATLAS.parts` in the script. Each entry names a file, the h
 
 - **Adding a structure.** Neurotorium serves every structure at `https://neurotorium.org/wp-content/themes/neurotorium/brain_atlas/models/<code>.glb`. The codes and names are in their `data.json`. Download the file, compress it with `npx @gltf-transform/cli draco in.glb out.glb`, save it under `models/neurotorium/`, and add an entry to `ATLAS.parts`.
 
-Compression shrank the 26 files from about 4 MB to 544 KB. The geometry is unchanged apart from tiny rounding.
+Compression shrank the 27 files from about 4 MB to 552 KB. The geometry is unchanged apart from tiny rounding.
 
 ## How it works
 
