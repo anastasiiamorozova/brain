@@ -217,6 +217,37 @@
        title screen's text colour (white on the coloured backgrounds). */
     .onet-logo { display: block; width: clamp(72px, 9vw, 104px); height: auto; fill: var(--s1-ink); }
 
+    /* ---------- Test: a frosted card on the title background ---------- */
+
+    /* A short scroll lock: the section is 0.6 screen taller than the card's
+       screen, and the card stays pinned while that extra part scrolls by. */
+    .quiz { height: calc(var(--screen) * 1.6); }
+
+    .quiz__pin {
+      position: sticky;
+      top: 0;
+      height: var(--screen);
+      display: grid;
+      place-items: center;
+      padding: calc(var(--banner-h) + 16px) 16px 16px;
+    }
+
+    .quiz__card {
+      width: min(980px, 100%);
+      min-height: min(760px, calc(var(--screen) - var(--banner-h) - 32px));
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.42);
+      -webkit-backdrop-filter: blur(18px) saturate(1.15);
+      backdrop-filter: blur(18px) saturate(1.15);
+      box-shadow: 0 24px 60px rgba(120, 40, 0, 0.18);
+      color: var(--s1-ink);
+      pointer-events: auto; /* the steps around it let clicks through */
+    }
+
     /* Content partner at the bottom of the title screen, in the text colour */
     .partner {
       position: absolute;
@@ -823,6 +854,13 @@
           </div>
         </header>
 
+        <!-- Test: on the title background, the brain spinning behind the card. -->
+        <section class="quiz" id="quiz" aria-label="Test">
+          <div class="quiz__pin">
+            <div class="quiz__card"></div>
+          </div>
+        </section>
+
         <section class="step" data-time="06:00" data-yaw="15" data-pitch="14">
           <div class="step-text">
             <p>Mózg nie pracuje przez całą dobę tak samo. Różne jego obszary osiągają szczyt aktywności o różnych porach dnia i nocy.</p>
@@ -1082,13 +1120,13 @@
 
   <script>
   (function () {
-    // The scroll button on the title screen takes you to the first step.
+    // The scroll button on the title screen takes you to the next screen: the test.
     var button = document.getElementById('scrollHint');
-    var first = document.querySelector('.step');
+    var first = document.querySelector('.quiz') || document.querySelector('.step');
     if (!button || !first) return;
     button.addEventListener('click', function () {
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      first.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      first.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: first.classList.contains('quiz') ? 'start' : 'center' });
     });
   })();
   </script>
@@ -1394,7 +1432,7 @@
               vec3 grey = vec3(dot(tissue, vec3(0.2126, 0.7152, 0.0722)));
               // Title screen: above 0 the brain turns white, below 0 dark charcoal.
               tissue = uWhiten >= 0.0
-                ? mix(tissue, vec3(0.45 + 1.6 * grey.r), uWhiten) // reaches above 1 because tone mapping greys it
+                ? mix(tissue, vec3(0.65 + 1.6 * grey.r), uWhiten) // reaches above 1 because tone mapping greys it
                 : mix(tissue, vec3(0.04 + 0.14 * grey.r), -uWhiten);
               // Title screen: the brain in one colour, still shaded by the matcap.
               tissue = mix(tissue, uTint * (0.1 + 1.5 * grey.r), uTintAmount);
@@ -1427,7 +1465,7 @@
                 float seeThrough = mix(0.05 + 0.45 * pow(1.0 - facing, 2.0), 0.92, vRegionWeight);
                 diffuseColor.a *= mix(1.0, seeThrough, uGhost);
                 // A white or dark brain keeps a veil over the faces turned to you.
-                diffuseColor.a = max(diffuseColor.a, 0.16 * abs(uWhiten) * uGhost);
+                diffuseColor.a = max(diffuseColor.a, 0.32 * abs(uWhiten) * uGhost);
                 // Title screen impulses glow through the see-through surface.
                 if (uSpark > 0.0) {
                   float spark = clamp(impulses(vBrainPosition, uTime) * 1.8, 0.0, 1.0) * uSpark;
@@ -2170,12 +2208,19 @@
       const rect = element.getBoundingClientRect();
       return rect.top + window.scrollY + rect.height / 2;
     };
+    // The title look lasts through the test screen, so the move starts from there:
+    // from where the test's pinned card lets go (its last screen in the middle).
+    const quiz = document.querySelector('.quiz');
     function measureSteps() {
       stepCenters = steps.map(pageCenter);
-      introCenter = intro ? pageCenter(intro) : null;
+      if (quiz) {
+        introCenter = quiz.getBoundingClientRect().bottom + window.scrollY - window.innerHeight / 2;
+      } else {
+        introCenter = intro ? pageCenter(intro) : null;
+      }
     }
 
-    // 0 while the title is in the middle of the screen, 1 once the first step is.
+    // 0 up to the test screen in the middle of the screen, 1 once the first step is.
     function introProgress() {
       if (introCenter === null || !stepCenters.length) return 1;
       const anchor = window.scrollY + window.innerHeight / 2;
@@ -2361,7 +2406,7 @@
 
     // On the title screen the brain turns by itself; scrolling slows it down and
     // it lands, the short way round, on the first step's view.
-    const TITLE_SPIN = 0.35; // radians per second
+    const TITLE_SPIN = 0.25; // radians per second, a turn in about 25 s
     let titleSpin = 0;
 
     // How the brain looks on the title screen comes from the theme in CSS
