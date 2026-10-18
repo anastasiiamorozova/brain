@@ -15,6 +15,48 @@
   </script>
 
   <script>
+    // Asset versions: bump ASSET_V whenever a model, texture or image changes.
+    window.ASSET_V = '20261018-1455';
+    window.wersja = function (u) { return u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + window.ASSET_V; };
+
+    // Loading order, as in the other special projects (lalka's tloGotowe):
+    // 1. the brain: its files are fetched first and it fades in on its own;
+    // 2. the title screen's content fades in once the brain is there (and the fonts);
+    // 3. everything else (photos further down, videos) waits for window.s1Gotowe.
+    (function () {
+      var root = document.documentElement;
+      root.classList.add('js-s1');
+      var brainDone;
+      var brain = new Promise(function (resolve) { brainDone = resolve; });
+      window.mozgGotowy = function () { brainDone(); };
+      window.setTimeout(brainDone, 8000); // no 3D or a slow network: show the title anyway
+      function wait(ms) { return new Promise(function (resolve) { window.setTimeout(resolve, ms); }); }
+      window.s1Widoczny = brain
+        .then(function () { return wait(450); }) // let the brain fade in first
+        .then(function () { return Promise.race([document.fonts ? document.fonts.ready : null, wait(2000)]); })
+        .then(function () { root.classList.add('s1-on'); });
+      window.s1Gotowe = window.s1Widoczny.then(function () { return wait(900); }); // after the title has faded in
+
+      // Brain files first: the parts, the matcaps and the Draco decoder.
+      var parts = ['1.1.1.3.0', '1.1.1.4.0', '1.1.1.5.1', '1.1.2.1.1', '1.1.2.0.0', '1.1.3.0.0', '1.1.4.0.0', '1.1.1.7.0', '1.1.1.8.0', '1.1.4.4.0', '1.1.1.1.1', '1.1.1.1.2', '2.1.0.0.0', '2.3.0.0.0', '2.1.1.0.0', '4.2.0.0.0', '4.3.0.0.0', '4.1.0.0.0', '1.1.3.1.0', '3.2.0.0.0', '3.2.4.0.0', '3.1.1.0.0', '1.1.10.0.0', '1.1.4.3.3', '1.1.4.3.2', '1.1.4.3.1', '1.1.6.5.0'];
+      function preload(href, as, cors) {
+        var link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = as;
+        link.href = href;
+        if (cors) link.crossOrigin = 'anonymous';
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      }
+      parts.forEach(function (code) { preload(window.wersja('models/neurotorium/' + code + '.glb'), 'fetch', true); });
+      preload(window.wersja('textures/matcaps/80726C_DCDBD7_9AA6C2_B7BFCA-256px.png'), 'image', true);
+      preload(window.wersja('textures/matcaps/8C5945_D4C0B6_C3A49C_430504bw-256px.png'), 'image', true);
+      preload('https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js', 'fetch', true);
+      preload('https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/draco/gltf/draco_decoder.wasm', 'fetch', true);
+    })();
+  </script>
+
+  <script>
     window.ompRingPages = window.ompRingPages || {};
     window.ompRingPages.cmd = window.ompRingPages.cmd || [];
     window.paywallEmbed = window.paywallEmbed || {};
@@ -26,10 +68,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" fetchpriority="high">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" fetchpriority="high">
 
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js">
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js">
   <script type="importmap">
     {
       "imports": {
@@ -38,6 +79,13 @@
       }
     }
   </script>
+  <!-- after the import map: modules may only start loading once it is known -->
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/loaders/GLTFLoader.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/loaders/DRACOLoader.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/utils/BufferGeometryUtils.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/math/SimplexNoise.js">
 
   <style>
     :root {
@@ -91,27 +139,46 @@
          height, not the reader's screen, so the Ring script sets this in px. */
       --screen: 100vh;
       --banner-h: 46px;
+      --banner-now: var(--banner-h); /* 0 once the banner has slid away after the introduction */
 
-      /* Title screen (s1) theme: red-orange, deeper towards the edges, white type. */
-      --s1-bg: #ff7b00;
-      --s1-ink: #fff;
-      --s1-muted: rgba(255, 255, 255, 0.92);
+      /* Title screen (s1) theme: light paper, dark type, the brain in its own
+         colours with red-orange impulses. */
+      --s1-bg: var(--paper);
+      --s1-light: 0.6;          /* 0–1: white light behind the brain, as on the story's background */
+      --s1-ink: var(--ink);
+      --s1-muted: var(--muted);
       --s1-shadow: none;
-      --s1-on-ink: #1b1b1b;     /* text on a filled button in --s1-ink */
-      --s1-spark: 0.4;          /* 0–1: red-orange impulses running over the brain */
+      --s1-on-ink: #fff;        /* text on a filled button in --s1-ink */
+      --s1-spark: 0;            /* 0–1: red-orange impulses running over the brain */
       --s1-spark-color: #ff4a14;
-      --s1-whiten: 1;           /* -1 to 1: brain turned dark (below 0) or white (above 0) */
+      --s1-whiten: 0;          /* -1 to 1: brain turned dark (below 0) or white (above 0) */
       --s1-tint: #ffffff;       /* brain in one colour... */
       --s1-tint-amount: 0;      /* ...this strongly, 0–1 */
-      --s1-crease: 1;           /* 0–1: --s1-spark-color light in the creases */
-      --s1-ghost: 0.85;         /* 0 solid, 1 see-through */
+      --s1-crease: 0;           /* 0–1: --s1-spark-color light in the creases */
+      --s1-ghost: 0.8;          /* 0 solid, 1 see-through */
       --s1-glow: 0;             /* 0–1: a soft light behind the brain, following it */
       --s1-glow-color: #ffc46b;
+      --quiz-shadow: 0 24px 60px rgba(40, 30, 20, 0.12);
+    }
+
+    /* Flat orange title screen with a white brain, kept for comparison: ?s1=pomarancz */
+    html[data-s1="pomarancz"] {
+      --s1-bg: #ff7b00;
+      --s1-light: 0;
+      --s1-ink: #fff;
+      --s1-muted: rgba(255, 255, 255, 0.92);
+      --s1-on-ink: #1b1b1b;
+      --s1-spark: 0.4;
+      --s1-whiten: 1;
+      --s1-crease: 1;
+      --s1-ghost: 0.85;
+      --quiz-shadow: 0 24px 60px rgba(120, 40, 0, 0.18);
     }
 
     /* Dark title screen: a white brain with red-orange impulses. ?s1=ciemny */
     html[data-s1="ciemny"] {
       --s1-bg: radial-gradient(ellipse 75% 70% at 55% 42%, #2a1d18 0%, #17110e 55%, #0b0807 100%);
+      --s1-light: 0;
       --s1-spark: 1;
       --s1-whiten: 1;
       --s1-crease: 0;
@@ -167,12 +234,17 @@
       justify-content: center;
       gap: 4px;
       height: var(--banner-h);
-      background: #f4f3ee;
-      color: #000;
+      background: #000;
+      color: #fff;
       font: 400 15px var(--ui);
       pointer-events: none;
+      transition: transform 300ms ease;
     }
+    /* After the introduction the banner slides away, and the sticky parts below take its place */
+    html.banner-off { --banner-now: 0px; }
+    html.banner-off .premium-banner { transform: translateY(-100%); }
     .premium-banner__logo { max-width: 120px; height: 32px; display: inline-block; vertical-align: middle; }
+    .premium-banner__logo path { fill: #fff; } /* the word in white, the dot stays yellow */
     @media (max-width: 325px) { .premium-banner__text { display: none; } }
 
     html.paywall-locked, html.paywall-locked body { overflow: hidden; touch-action: none; }
@@ -203,6 +275,44 @@
       text-shadow: var(--s1-shadow);
     }
 
+    /* Until the brain is there the title's content is hidden, then it comes in
+       piece by piece (0.5 s, from 8 px lower). Without JS it is simply shown. */
+    .js-s1 .intro > * {
+      opacity: 0;
+      translate: 0 8px;
+      transition: opacity 500ms ease, translate 500ms ease;
+    }
+    .s1-on .intro > * { opacity: 1; translate: 0 0; }
+
+    /* The title logo comes in word by word: "Mózg", the gauge pops on like a
+       sticker, then "na", "pełnych", "obrotach" (--i is each part's turn). */
+    .js-s1 .intro > h1 { opacity: 1; translate: none; transition: none; }
+    .js-s1 .title-logo__text,
+    .js-s1 .title-logo__gauge {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: 50% 60%;
+      transition-delay: calc(90ms + var(--i) * 140ms);
+    }
+    .js-s1 .title-logo__text {
+      transform: translateY(22%);
+      transition-property: opacity, transform;
+      transition-duration: 450ms, 600ms;
+      transition-timing-function: ease, cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .js-s1 .title-logo__gauge {
+      transform: scale(0.5) rotate(-16deg);
+      transition-property: opacity, transform;
+      transition-duration: 250ms, 650ms;
+      transition-timing-function: ease, cubic-bezier(0.34, 1.56, 0.64, 1); /* a little overshoot */
+    }
+    .s1-on .title-logo__text,
+    .s1-on .title-logo__gauge { opacity: 1; transform: none; }
+    .s1-on .intro > :nth-child(2) { transition-delay: 90ms; }
+    .s1-on .intro > :nth-child(3) { transition-delay: 180ms; }
+    .s1-on .intro > :nth-child(4) { transition-delay: 270ms; }
+    .s1-on .intro > :nth-child(5) { transition-delay: 360ms; }
+
     /* Title logo: Fira Sans ExtraBold in three staggered lines with a tilted
        gauge between "Mózg" and "na"; one SVG, so it scales as a whole. */
     .intro h1 {
@@ -215,7 +325,35 @@
 
     /* Onet logo above the title: the dot stays yellow, the letters take the
        title screen's text colour (white on the coloured backgrounds). */
-    .onet-logo { display: block; width: clamp(72px, 9vw, 104px); height: auto; fill: var(--s1-ink); }
+    /* Onet and Medonet side by side, the same height; dots yellow, letters in the text colour */
+    .brand-logos { display: flex; align-items: center; justify-content: center; gap: clamp(18px, 2.4vw, 28px); }
+    .onet-logo,
+    .medonet-logo { display: block; width: auto; height: clamp(24px, 3vw, 33px); fill: var(--s1-ink); }
+
+    /* ---------- Introduction: plain text on the title background ---------- */
+
+    .wstep {
+      min-height: var(--screen);
+      display: grid;
+      place-items: center;
+      padding: calc(var(--banner-h) + 16px) 16px 16px;
+    }
+
+    .wstep__card {
+      width: min(720px, 100%);
+      padding: 0 8px;
+      color: #2b2c29;
+      font: 400 clamp(18px, 1.5vw, 21px)/1.55 var(--sans);
+      text-wrap: pretty;
+      pointer-events: auto; /* the steps around it let clicks through */
+    }
+
+    .wstep__card p { margin: 0; }
+    .wstep__card p + p { margin-top: 0.9em; }
+
+    @media (max-width: 760px) {
+      .wstep__card { font-size: 17px; }
+    }
 
     /* ---------- Test: a frosted card on the title background ---------- */
 
@@ -229,21 +367,21 @@
       height: var(--screen);
       display: grid;
       place-items: center;
-      padding: calc(var(--banner-h) + 16px) 16px 16px;
+      padding: calc(var(--banner-now) + 16px) 16px 16px;
     }
 
     .quiz__card {
       width: min(980px, 100%);
-      min-height: min(760px, calc(var(--screen) - var(--banner-h) - 32px));
+      min-height: min(760px, calc(var(--screen) - var(--banner-now) - 32px));
       display: grid;
       place-items: center;
       padding: 32px;
-      border: 1px solid rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 28px;
-      background: rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.55);
       -webkit-backdrop-filter: blur(18px) saturate(1.15);
       backdrop-filter: blur(18px) saturate(1.15);
-      box-shadow: 0 24px 60px rgba(120, 40, 0, 0.18);
+      box-shadow: var(--quiz-shadow);
       color: var(--s1-ink);
       pointer-events: auto; /* the steps around it let clicks through */
     }
@@ -256,11 +394,12 @@
       transform: translateX(-50%);
       display: grid;
       justify-items: center;
-      gap: 8px;
+      gap: 12px;
       color: var(--s1-ink);
       white-space: nowrap;
     }
-    .partner__label { font: 500 13px/1.2 var(--sans); opacity: .85; }
+    .partner__label { font: 300 13px/1.2 var(--sans); opacity: .85; }
+    .instytut { stroke: currentColor; stroke-width: 0.9px; stroke-linejoin: round; } /* the thin "INSTYTUT" in the Bez stresu logo, a little bolder */
     .partner__logo { display: block; width: clamp(130px, 14vw, 176px); height: auto; fill: currentColor; }
     .title-logo__text { font: 800 290px var(--sans); fill: var(--s1-ink); }
 
@@ -292,6 +431,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .scroll-hint:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+    .scroll-hint:active { transform: scale(0.985); } /* style spec: buttons shrink a little when pressed */
 
     .scroll-hint__icon { position: relative; display: grid; place-items: center; }
     .scroll-hint__icon i {
@@ -403,6 +543,7 @@
     /* ---------- Scrollytelling: sticky brain + scrolling cards ---------- */
 
     .scrolly {
+      --head-h: calc(var(--banner-now) + 140px); /* the clock header, with its fading edge */
       position: relative;
       /* Background shared by the brain's layer and the timeline header, so the
          header blends in: a soft light behind the brain, grain and paper. */
@@ -414,7 +555,7 @@
 
     /* The timeline header sits above the story text, which slides under it and
        never reaches the top of the screen. The layer is as tall as the brain's,
-       so the two stick and unstick together. */
+       so after the last step the clock is left behind and scrolls away with the brain. */
     .sticky-overlay {
       --head-o: 0; /* hidden on the title screen until the script takes over */
       position: sticky;
@@ -432,10 +573,11 @@
       top: 0;
       left: 0;
       right: 0;
-      height: calc(var(--banner-h) + clamp(14px, calc(var(--screen) * 0.03), 26px) + 108px);
-      /* the bottom edge fades, so text disappears gradually as it slides under */
-      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
-      mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+      height: var(--head-h);
+      /* the bottom 40 px fade, so text disappears gradually as it slides under
+         (as the test's scroll areas: style spec, "Zanikające krawędzie") */
+      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
+      mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
     }
 
     /* The header's background and the timeline stay hidden on the title screen
@@ -464,8 +606,11 @@
     .title-bg {
       position: absolute;
       inset: 0;
-      background: var(--grain, none) 0 0 / 128px 128px, var(--s1-bg);
-      background-blend-mode: multiply, normal;
+      background:
+        var(--grain, none) 0 0 / 128px 128px,
+        radial-gradient(circle at var(--brain-x, 50%) var(--brain-y, 50%), rgba(255, 255, 255, var(--s1-light)) 0, rgba(255, 255, 255, 0) 42vmax),
+        var(--s1-bg);
+      background-blend-mode: multiply, normal, normal;
       opacity: var(--title-o, 1);
     }
 
@@ -517,87 +662,35 @@
 
 
 
-    /* ---------- Timeline: a day from 6:00 to 6:00 with a moving sun ---------- */
+    /* ---------- Timeline: a clock running through the day ---------- */
 
+    /* The hour on a tilted sticker in the colour of the sky at that time, as the
+       clocks in the article, with the time beside it. */
     .timeline {
-      --p: 0; /* progress through the day, 0 to 1, set by the script */
       position: absolute;
-      top: calc(var(--banner-h) + clamp(14px, calc(var(--screen) * 0.03), 26px));
-      left: max(24px, 6vw);
-      right: max(24px, 6vw);
+      top: calc(var(--banner-now) + 28px);
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 2;
-      padding-top: 38px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
       pointer-events: none;
       opacity: var(--head-o, 1);
       font-family: var(--sans);
-      /* Own compositing layer: the bar changes every frame while scrolling, and this
-         keeps those repaints from touching the large grainy background behind it. */
+      /* Own compositing layer: the clock changes every frame while scrolling, and this
+         keeps those repaints from touching the large background behind it. */
       will-change: transform;
     }
 
-    .timeline__bar {
-      position: relative;
-      height: 6px;
-    }
-
-    .timeline__track,
-    .timeline__fill {
-      position: absolute;
-      inset: 0;
-      border-radius: 3px;
-      background: linear-gradient(90deg,
-        var(--sky-dawn) 0%, var(--sky-day) 8%, var(--sky-day) 46%, var(--sky-dusk) 54%,
-        var(--sky-night) 63%, var(--sky-night) 92%, var(--sky-dawn) 100%);
-    }
-
-    .timeline__track { opacity: 0.22; }
-
-    .timeline__fill {
-      clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0 round 3px);
-    }
-
-    .timeline__marker {
-      position: absolute;
-      top: 50%;
-      left: calc(var(--p) * 100%);
-    }
-
-    .timeline__icon {
-      position: absolute;
-      left: -17px;
-      top: -17px;
-      width: 34px;
-      height: 34px;
-      overflow: visible;
-    }
-
-    .timeline__sun circle { fill: #ffd23f; stroke: #f59e0b; stroke-width: 1.4; }
-    .timeline__sun line { stroke: #f59e0b; stroke-width: 1.8; stroke-linecap: round; }
-    .timeline__moon { fill: #eef1f8; stroke: #5b6687; stroke-width: 1.2; }
+    .timeline__clock { flex: none; width: 64px; height: 64px; overflow: visible; }
+    .timeline__clock .clock__tile { fill: var(--sky, var(--sky-dawn)); }
 
     .timeline__time {
-      position: absolute;
-      bottom: 20px;
-      left: 0;
-      transform: translateX(-50%);
-      font: 600 14px/1 var(--sans);
+      font: 800 34px/1 var(--sans);
+      letter-spacing: -0.015em;
       font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-
-    .timeline__ticks {
-      position: relative;
-      height: 12px;
-      margin-top: 12px;
-    }
-
-    .timeline__ticks span {
-      position: absolute;
-      top: 0;
-      transform: translateX(-50%);
-      font: 500 11px/1 var(--sans);
-      font-variant-numeric: tabular-nums;
-      color: var(--muted);
+      color: var(--ink);
     }
 
     /* ---------- Steps ---------- */
@@ -616,17 +709,26 @@
       padding: 0 max(24px, 6vw);
     }
 
-    /* Story text sits straight on the page, without a box. A soft glow in the
-       paper colour keeps it readable where it passes over the brain. */
+    /* The last one is shorter, so the article follows without a screen of empty space */
+    .step:last-child { min-height: calc(var(--screen) * 0.7); }
+
+    /* Story text sits straight on the page, without a box. */
     .step-text {
       width: min(440px, 36vw);
       font: 400 clamp(18px, 1.4vw, 21px)/1.5 var(--sans);
-      text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 14px var(--paper);
       pointer-events: auto;
     }
 
     .step-text p { margin: 0; }
     .step-text p + p { margin-top: 0.8em; }
+    /* How to read the graphic, under the last step: on a white card */
+    .step-text .step-note {
+      margin-top: 1.2em;
+      padding: 18px 22px;
+      border-radius: 18px;
+      background: #fff;
+      text-shadow: none;
+    }
 
     /* Structure names in the text, in the colour they have on the model */
     .step-text mark {
@@ -640,28 +742,177 @@
       box-decoration-break: clone;
     }
 
-    /* ---------- Note below the graphic ---------- */
+    /* ---------- Article: the day hour by hour ---------- */
 
-    .note {
-      max-width: 40rem;
-      margin: 0;
-      padding: calc(var(--screen) * 0.1) max(24px, 6vw) calc(var(--screen) * 0.14);
-      font: 400 15px/1.55 var(--sans);
-      color: var(--muted);
-      text-wrap: pretty;
+    .article {
+      width: min(680px, 100%);
+      margin: 0 auto;
+      padding: 48px 20px calc(var(--screen) * 0.1);
+      font: 400 clamp(17px, 1.3vw, 19px)/1.6 var(--sans);
+      color: var(--ink);
     }
 
-    /* ---------- Footer ---------- */
+    .article p { margin: 0 0 1em; }
+
+    /* Headline: "24" on a tilted yellow sticker in the line, like the gauge in the title logo */
+    .article__title {
+      margin: 0 0 24px;
+      font: 800 clamp(34px, 3.4vw, 44px)/1.2 var(--sans);
+      letter-spacing: -0.015em;
+    }
+    .article__sticker {
+      display: inline-block;
+      margin-right: 0.08em;
+      padding: 0 0.16em;
+      border-radius: 0.18em;
+      background: var(--onet);
+      font-variant-numeric: tabular-nums;
+      transform: rotate(-8.5deg);
+    }
+
+    .article__lead {
+      font-size: clamp(19px, 1.7vw, 22px);
+      line-height: 1.45;
+      color: var(--muted);
+      text-wrap: balance;
+    }
+
+    .author { display: flex; align-items: center; gap: 12px; margin: 24px 0 40px; }
+    .author__photo { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #e7e1d4; object-fit: cover; }
+    .author__name { margin: 0 !important; font-weight: 700; line-height: 1.3; }
+
+    /* Clock: the hour on a tilted sticker in the colour of the sky at that time */
+    .clock {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 48px 0 24px;
+      padding-top: 40px;
+      border-top: 2px solid var(--ink); /* a strong rule above the first clock, where the hours begin */
+    }
+    .clock ~ .clock { margin-top: 72px; padding-top: 0; border-top: 0; }
+    .clock__face { flex: none; width: 80px; height: 80px; overflow: visible; }
+    .clock__tile { fill: var(--sky); stroke: var(--paper); stroke-width: 4; }
+    .clock__dial { fill: #fff; }
+    .clock__hand { stroke: var(--ink); stroke-width: 4.5; stroke-linecap: round; }
+    .clock__label { margin: 0; font: 500 18px/1.1 var(--sans); color: var(--muted); }
+    .clock__time {
+      display: block;
+      margin-bottom: 4px;
+      font-size: clamp(40px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.015em;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+
+    /* A quote set large to break up the text */
+    .pull {
+      margin: 44px 0;
+      padding-left: 22px;
+      border-left: 6px solid var(--onet);
+      font: 800 clamp(23px, 2.2vw, 28px)/1.3 var(--sans);
+      letter-spacing: -0.01em;
+      text-wrap: balance;
+    }
+    .pull cite { display: block; margin-top: 12px; font: 300 15px/1.3 var(--sans); font-style: normal; letter-spacing: 0; color: var(--muted); }
+
+    /* Frame for a video player, filled in later */
+    .video {
+      margin: 36px 0;
+      aspect-ratio: 16 / 9;
+      border-radius: 20px;
+      background: #000;
+    }
+
+    /* Infographic: a white card of foods, each on a tilted sticker as in the test */
+    .info {
+      margin: 40px 0;
+      padding: 28px 28px 22px;
+      border-radius: 20px;
+      background: #fff;
+    }
+    .info__title { margin: 0 0 22px; font: 800 22px/1.2 var(--sans); letter-spacing: -0.01em; }
+    .info__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px 24px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .info__item { display: flex; align-items: flex-start; gap: 14px; font-size: 15px; line-height: 1.45; color: var(--muted); }
+    .info__item strong { display: block; margin-bottom: 2px; font-size: 17px; font-weight: 800; color: var(--ink); }
+
+    .sticker {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border: 4px solid #fff;
+      border-radius: 15px;
+      background: var(--tile);
+      color: var(--ink);
+      transform: rotate(-8.5deg);
+    }
+    .sticker--photo { width: 68px; height: 68px; border-radius: 18px; background: #9ad9be; }
+    .sticker--photo img { display: block; width: var(--photo, 54px); height: var(--photo, 54px); object-fit: contain; }
+
+    .info__avoid { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e7e1d4; }
+    .info__avoid h4 { margin: 0 0 12px; font: 800 17px/1.2 var(--sans); }
+    .info__avoid ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .info__avoid li {
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: #f14b44;
+      color: #fff;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .info__source { margin-top: 20px; font-size: 13px; color: #8b8c85; }
+
+
+
+    @media (max-width: 560px) {
+      .info { padding: 22px 18px 18px; }
+      .info__grid { grid-template-columns: 1fr; gap: 18px; }
+    }
+
+    .bio {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid #e7e1d4;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .bio p { margin-bottom: 0.7em; }
+
+    /* ---------- Footer (as in the other special projects) ---------- */
 
     .page-footer {
-      margin: 0 max(24px, 6vw);
-      padding: 18px 0 28px;
-      border-top: 1px solid var(--line);
-      font: 400 12px/1.4 var(--sans);
-      color: var(--muted);
+      padding: 64px 16px;
+      background: #fff; /* set apart from the paper of the article */
+      text-align: center;
+      font-family: var(--sans);
+      color: var(--ink);
     }
+    .footer-inner { width: min(620px, 100%); margin: 0 auto; }
+    .footer-logo { display: block; width: min(260px, 62vw); height: auto; margin: 0 auto 34px; overflow: visible; }
+    .footer-logo__text { font: 800 290px var(--sans); fill: var(--ink); }
+    .footer-block { margin: 0 0 14px; font-size: 14px; line-height: 1.5; }
+    .footer-block strong { font-weight: 700; }
+    .footer-line { margin-bottom: 8px; }
+    .footer-title { margin-top: 36px; margin-bottom: 10px; font-weight: 700; }
+    .footer-title + .footer-block { margin-bottom: 30px; }
+    .footer-partner { display: block; width: 150px; height: auto; margin: -16px auto 0; fill: var(--ink); } /* under the partner's name */
 
-    .page-footer p { margin: 0; }
+    @media (max-width: 620px) {
+      .page-footer { padding: 52px 16px 64px; }
+      .footer-block { font-size: 13px; }
+    }
 
     /* ---------- Phones: brain on top, text slides up from the bottom ---------- */
 
@@ -675,28 +926,33 @@
       .step-text {
         width: 100%;
         max-width: 520px;
+        padding: 64px 16px;
         font-size: 17px;
-        text-shadow: 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 12px var(--paper), 0 0 22px var(--paper);
+        /* On phones the text passes over the brain: a see-through wash in the
+           paper colour behind it, fading out at the top and bottom. */
+        background: linear-gradient(to bottom,
+          rgba(244, 241, 233, 0) 0, rgba(244, 241, 233, 0.55) 64px,
+          rgba(244, 241, 233, 0.55) calc(100% - 64px), rgba(244, 241, 233, 0) 100%);
       }
 
-      .timeline {
-        top: calc(var(--banner-h) + 10px);
-        left: 18px;
-        right: 18px;
-        padding-top: 34px;
-      }
+      .timeline { top: calc(var(--banner-now) + 20px); }
 
-      .timeline__ticks span.is-minor { display: none; }
-
-
-      .timeline-head { height: calc(var(--banner-h) + 126px); }
+      .scrolly { --head-h: calc(var(--banner-now) + 132px); }
     }
+
+    /* Line breaking, as in the style spec: headings, leads, step texts, captions and
+       the footer break into even lines; running text only avoids a lone last word. */
+    .dek, .wstep__card, .step-text, .clock__label, .info__title, .info__item,
+    .info__avoid h4, .info__source, .author__name, .partner__label, .footer-block,
+    .article__title, .article__lead, .pull { text-wrap: balance; }
+    .article p:not(.article__lead), .bio p { text-wrap: pretty; }
 
     @media (prefers-reduced-motion: reduce) {
       .scroll-hint__icon, .scroll-hint__icon i, .scroll-hint__icon::before, .scroll-hint__icon::after { animation: none !important; }
       .sticky-visual canvas { transition: none; }
       .scroll-progress { transition: none; }
       .title-bg::after { animation: none; }
+      .js-s1 .intro > *, .js-s1 .title-logo__text, .js-s1 .title-logo__gauge { translate: none; transform: none; transition-duration: 1ms; transition-delay: 0s; }
     }
   </style>
 </head>
@@ -723,36 +979,15 @@
       <div class="sticky-overlay" aria-hidden="true">
         <div class="timeline-head">
           <div class="timeline" aria-hidden="true">
-            <div class="timeline__bar">
-              <div class="timeline__track"></div>
-              <div class="timeline__fill"></div>
-              <div class="timeline__marker">
-                <span class="timeline__time">06:00</span>
-                <svg class="timeline__icon" viewBox="-17 -17 34 34">
-                  <defs>
-                    <mask id="moon-cut">
-                      <rect x="-17" y="-17" width="34" height="34" fill="#fff"></rect>
-                      <circle r="7" cx="4" cy="-3" fill="#000"></circle>
-                    </mask>
-                  </defs>
-                  <g class="timeline__sun">
-                    <line x1="0" y1="-11" x2="0" y2="-15"></line>
-                    <line x1="0" y1="11" x2="0" y2="15"></line>
-                    <line x1="-11" y1="0" x2="-15" y2="0"></line>
-                    <line x1="11" y1="0" x2="15" y2="0"></line>
-                    <line x1="7.8" y1="7.8" x2="10.6" y2="10.6"></line>
-                    <line x1="-7.8" y1="7.8" x2="-10.6" y2="10.6"></line>
-                    <line x1="7.8" y1="-7.8" x2="10.6" y2="-10.6"></line>
-                    <line x1="-7.8" y1="-7.8" x2="-10.6" y2="-10.6"></line>
-                    <circle r="8"></circle>
-                  </g>
-                  <g class="timeline__moon" style="opacity: 0">
-                    <circle r="8" mask="url(#moon-cut)"></circle>
-                  </g>
-                </svg>
-              </div>
-            </div>
-            <div class="timeline__ticks"></div>
+            <svg class="timeline__clock" viewBox="-40 -40 80 80">
+              <g transform="rotate(-8.5)">
+                <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+                <circle class="clock__dial" r="22"></circle>
+                <line class="clock__hand timeline__minute" x1="0" y1="0" x2="0" y2="-15"></line>
+                <line class="clock__hand timeline__hour" x1="0" y1="0" x2="0" y2="-10" transform="rotate(180)"></line>
+              </g>
+            </svg>
+            <span class="timeline__time">06:00</span>
           </div>
         </div>
       </div>
@@ -760,7 +995,7 @@
       <div class="sticky-visual" id="brainVisual">
         <div class="title-bg" aria-hidden="true"></div>
         <canvas id="brainCanvas" role="img" aria-label="Obracający się model 3D mózgu z zaznaczonymi obszarami, o których mowa w tekście"></canvas>
-        <p class="loader" id="brainLoader">Ładowanie modelu mózgu…</p>
+        <p class="loader" id="brainLoader"></p> <!-- empty; says so only if the browser has no 3D -->
 
       </div>
 
@@ -788,13 +1023,25 @@
         <!-- Title screen: the brain spins in the middle behind it, then settles
              into its place for the first step as you scroll. -->
         <header class="intro">
-          <svg class="onet-logo" viewBox="0 14 97 32" role="img" aria-label="Onet">
-            <path fill="#FFD200" d="M15.22 45.22C23.6258 45.22 30.44 38.4058 30.44 30C30.44 21.5942 23.6258 14.78 15.22 14.78C6.81423 14.78 0 21.5942 0 30C0 38.4058 6.81423 45.22 15.22 45.22Z"></path>
-            <path d="M44.28 38.04C39.77 38.04 36.23 34.51 36.23 29.99C36.23 25.47 39.76 21.94 44.28 21.94C48.8 21.94 52.36 25.47 52.36 29.99C52.36 34.51 48.81 38.04 44.28 38.04ZM44.28 25.86C41.94 25.86 40.24 27.6 40.24 29.99C40.24 32.38 41.94 34.12 44.28 34.12C46.62 34.12 48.35 32.38 48.35 29.99C48.35 27.6 46.64 25.86 44.28 25.86Z"></path>
-            <path d="M64.3499 37.61V28.74C64.3499 26.82 63.2499 25.67 61.3999 25.67C59.3099 25.67 58.1899 27.42 58.1199 27.78V37.61H54.1099V22.39H57.6199V23.95C58.5499 22.65 60.6299 21.94 62.5899 21.94C64.2099 21.94 65.6699 22.52 66.6899 23.58C67.7799 24.71 68.3599 26.33 68.3599 28.26V37.61H64.3499Z"></path>
-            <path d="M94.16 37.88C92.39 37.88 91.06 37.44 90.2 36.57C89.35 35.71 88.94 34.46 88.94 32.74V26.19H86.76V22.39H88.96V18.84L92.95 17.89V22.39H96.91V26.19H92.95V32.79C92.95 33.39 93.29 34.15 94.93 34.15C95.65 34.15 96.88 34 96.88 34V37.57C95.96 37.77 94.98 37.89 94.18 37.89L94.16 37.88Z"></path>
-            <path d="M78.4699 38.04C73.5499 38.04 70.1199 34.73 70.1199 29.99C70.1199 25.25 73.4999 21.94 78.1699 21.94C82.5699 21.94 85.8799 25.4 85.8799 29.99C85.8799 30.51 85.8299 31.01 85.7299 31.6V31.64H74.3199C74.8299 33.41 76.3199 34.39 78.5299 34.39C80.3499 34.39 81.3699 33.48 81.7199 33.09L85.0099 34.92C83.5299 36.96 81.2699 38.03 78.4699 38.03V38.04ZM81.8599 28.52C81.4199 26.66 80.0499 25.56 78.1599 25.56C76.1399 25.56 74.7199 26.64 74.2499 28.52H81.8499H81.8599Z"></path>
-          </svg>
+          <div class="brand-logos">
+            <svg class="onet-logo" viewBox="0 14.78 97 30.44" role="img" aria-label="Onet"> <!-- cropped to the dot, as the Medonet one, so the dots match -->
+              <path fill="#FFD200" d="M15.22 45.22C23.6258 45.22 30.44 38.4058 30.44 30C30.44 21.5942 23.6258 14.78 15.22 14.78C6.81423 14.78 0 21.5942 0 30C0 38.4058 6.81423 45.22 15.22 45.22Z"></path>
+              <path d="M44.28 38.04C39.77 38.04 36.23 34.51 36.23 29.99C36.23 25.47 39.76 21.94 44.28 21.94C48.8 21.94 52.36 25.47 52.36 29.99C52.36 34.51 48.81 38.04 44.28 38.04ZM44.28 25.86C41.94 25.86 40.24 27.6 40.24 29.99C40.24 32.38 41.94 34.12 44.28 34.12C46.62 34.12 48.35 32.38 48.35 29.99C48.35 27.6 46.64 25.86 44.28 25.86Z"></path>
+              <path d="M64.3499 37.61V28.74C64.3499 26.82 63.2499 25.67 61.3999 25.67C59.3099 25.67 58.1899 27.42 58.1199 27.78V37.61H54.1099V22.39H57.6199V23.95C58.5499 22.65 60.6299 21.94 62.5899 21.94C64.2099 21.94 65.6699 22.52 66.6899 23.58C67.7799 24.71 68.3599 26.33 68.3599 28.26V37.61H64.3499Z"></path>
+              <path d="M94.16 37.88C92.39 37.88 91.06 37.44 90.2 36.57C89.35 35.71 88.94 34.46 88.94 32.74V26.19H86.76V22.39H88.96V18.84L92.95 17.89V22.39H96.91V26.19H92.95V32.79C92.95 33.39 93.29 34.15 94.93 34.15C95.65 34.15 96.88 34 96.88 34V37.57C95.96 37.77 94.98 37.89 94.18 37.89L94.16 37.88Z"></path>
+              <path d="M78.4699 38.04C73.5499 38.04 70.1199 34.73 70.1199 29.99C70.1199 25.25 73.4999 21.94 78.1699 21.94C82.5699 21.94 85.8799 25.4 85.8799 29.99C85.8799 30.51 85.8299 31.01 85.7299 31.6V31.64H74.3199C74.8299 33.41 76.3199 34.39 78.5299 34.39C80.3499 34.39 81.3699 33.48 81.7199 33.09L85.0099 34.92C83.5299 36.96 81.2699 38.03 78.4699 38.03V38.04ZM81.8599 28.52C81.4199 26.66 80.0499 25.56 78.1599 25.56C76.1399 25.56 74.7199 26.64 74.2499 28.52H81.8499H81.8599Z"></path>
+            </svg>
+            <svg class="medonet-logo" viewBox="0 0 159.47 30.57" role="img" aria-label="Medonet">
+              <circle fill="#FFD200" cx="15.28" cy="15.28" r="15.28"></circle>
+              <path d="M106.64,23.35c-4.53,0-8.08-3.55-8.08-8.08s3.55-8.08,8.08-8.08,8.11,3.55,8.11,8.08-3.56,8.08-8.11,8.08ZM106.64,11.12c-2.35,0-4.06,1.74-4.06,4.15s1.71,4.15,4.06,4.15,4.09-1.74,4.09-4.15-1.72-4.15-4.09-4.15Z"></path>
+              <path d="M126.79,22.93v-8.9c0-1.93-1.11-3.08-2.96-3.08-2.1,0-3.23,1.76-3.3,2.12v9.87s-4.02,0-4.02,0V7.64h3.52v1.57c.94-1.3,3.03-2.02,4.99-2.02,1.63,0,3.09.58,4.12,1.65,1.1,1.14,1.68,2.76,1.68,4.7v9.39h-4.02Z"></path>
+              <path d="M156.72,23.19c-1.78,0-3.12-.44-3.98-1.31-.85-.86-1.27-2.12-1.27-3.85v-6.57h-2.18v-3.82h2.2v-3.57s4-.96,4-.96v4.52h3.98v3.82h-3.98v6.62c0,.6.34,1.36,1.98,1.36.72,0,1.95-.15,1.95-.15v3.59c-.92.2-1.91.32-2.71.32Z"></path>
+              <path d="M140.96,23.35c-4.94,0-8.38-3.32-8.38-8.08s3.4-8.08,8.08-8.08c4.42,0,7.75,3.47,7.75,8.08,0,.52-.05,1.02-.15,1.62v.04s-11.45,0-11.45,0c.51,1.78,2.01,2.76,4.22,2.76,1.83,0,2.85-.91,3.2-1.3l3.3,1.83c-1.49,2.04-3.76,3.13-6.57,3.13ZM144.37,13.79c-.44-1.86-1.82-2.97-3.71-2.97-2.03,0-3.45,1.08-3.92,2.97h7.63Z"></path>
+              <path d="M71.79,23.35c-4.94,0-8.38-3.32-8.38-8.08s3.4-8.08,8.08-8.08c4.42,0,7.75,3.47,7.75,8.08,0,.52-.05,1.02-.15,1.62v.04s-11.45,0-11.45,0c.51,1.78,2.01,2.76,4.22,2.76,1.83,0,2.85-.91,3.2-1.3l3.3,1.83c-1.49,2.04-3.76,3.13-6.57,3.13ZM75.2,13.79c-.44-1.86-1.82-2.97-3.71-2.97-2.03,0-3.45,1.08-3.92,2.97h7.63Z"></path>
+              <path d="M59.97,8.84c-1.03-1.06-2.49-1.65-4.12-1.65-.16,0-.33,0-.49.02-1.16.07-2.32.38-3.24.91-.45.26-.85.58-1.14.95-.04.04-.08.09-.11.13-.15.18-.29.38-.41.6-.22-.35-.47-.67-.76-.97-.5-.52-1.1-.92-1.78-1.2-.71-.29-1.5-.45-2.34-.45-1.96,0-4.05.72-4.99,2.02v-1.57h-3.52v15.28h4.02v-9.87c.07-.36,1.2-2.12,3.3-2.12,1.77,0,2.86,1.05,2.95,2.83,0,.08,0,.17,0,.25v8.9h4.02v-9.39c0-.08,0-.16,0-.24v-.17s0-.01,0-.02c.1-.39,1.23-2.16,3.3-2.16,1.85,0,2.96,1.15,2.96,3.08v8.9h4.02v-9.39c0-1.94-.58-3.57-1.68-4.7Z"></path>
+              <path d="M92.62,3.12v5.28c-.89-.69-2.59-1.21-4.09-1.21-4.53,0-8.08,3.55-8.08,8.08s3.55,8.08,8.08,8.08c1.5,0,2.89-.34,4.09-1.21v.78h4.06V4.07l-4.06-.96ZM88.53,19.42c-2.35,0-4.06-1.74-4.06-4.15s1.71-4.15,4.06-4.15,4.09,1.74,4.09,4.15-1.72,4.15-4.09,4.15Z"></path>
+            </svg>
+          </div>
           <h1>
             <!-- Laid out on the 2000 px wide design; the needle is turned by the script. -->
             <svg class="title-logo" viewBox="110 245 1800 780" role="img" aria-label="Mózg na pełnych obrotach">
@@ -804,6 +1051,7 @@
                   <stop offset="1" stop-color="#e36800"></stop>
                 </linearGradient>
               </defs>
+              <g class="title-logo__gauge" style="--i: 1">
               <g transform="translate(1460 597) rotate(8.5)">
                 <rect x="-172" y="-184" width="344" height="368" rx="46" fill="#ff7a00" stroke="#f4f1e9" stroke-width="14"></rect>
                 <g transform="translate(0 31)">
@@ -817,13 +1065,14 @@
                   </g>
                 </g>
               </g>
-              <text class="title-logo__text" x="603" y="495">Mózg</text>
-              <text class="title-logo__text" x="1880" y="477" text-anchor="end">na</text>
-              <text class="title-logo__text" x="133" y="747">pełnych</text>
-              <text class="title-logo__text" x="1880" y="1000" text-anchor="end">obrotach</text>
+              </g>
+              <text class="title-logo__text" x="603" y="495" style="--i: 0">Mózg</text>
+              <text class="title-logo__text" x="1880" y="477" text-anchor="end" style="--i: 2">na</text>
+              <text class="title-logo__text" x="133" y="747" style="--i: 3">pełnych</text>
+              <text class="title-logo__text" x="1880" y="1000" text-anchor="end" style="--i: 4">obrotach</text>
             </svg>
           </h1>
-          <p class="dek">Różne obszary mózgu osiągają szczyt aktywności o różnych porach doby. Przewiń, aby przejść od porannego przebudzenia po głęboki sen.</p>
+          <p class="dek">Nie jesteś mniej produktywny dlatego, że brakuje Ci silnej woli. Często działasz wbrew biologii własnego mózgu, który zmuszasz do większej wydajności. Sprawdź, jak nawiązać z nim najlepszą współpracę.</p>
           <button type="button" class="scroll-hint" id="scrollHint">
             <span class="scroll-hint__label">Przewiń</span>
             <span class="scroll-hint__icon" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -842,17 +1091,25 @@
               <path d="M306.58,34.29c-5.69,0-9.77-3.27-9.77-10.67V13.71a1.81,1.81,0,0,1,1.81-1.82h.15a1.82,1.82,0,0,1,1.82,1.82v9.86c0,5.18,2.31,7.55,6,7.55s6-2.37,6-7.55V13.71a1.81,1.81,0,0,1,1.81-1.82h0a1.81,1.81,0,0,1,1.81,1.82v9.91C316.29,31,312.26,34.29,306.58,34.29Z"></path>
               <path d="M76.91,23.67l-13.1-13.1a7.45,7.45,0,0,0-10.49,0l-.07.07L44.78,2.16a7.45,7.45,0,0,0-10.49,0l-8.47,8.48-.07-.07a7.44,7.44,0,0,0-10.48,0L2.16,23.67a7.45,7.45,0,0,0,0,10.49l13.11,13.1a7.44,7.44,0,0,0,10.48,0l.07-.07,8.47,8.48a7.45,7.45,0,0,0,10.49,0l8.47-8.48.07.07a7.45,7.45,0,0,0,10.49,0l13.1-13.1A7.45,7.45,0,0,0,76.91,23.67ZM36.39,4.26a4.48,4.48,0,0,1,6.29,0l8.48,8.47L44.85,19,44.78,19a7.42,7.42,0,0,0-10.49,0l-.07.06-6.3-6.31ZM32.13,36.69,25.82,43l-2.53-2.53a4.45,4.45,0,0,1,0-6.29L26.45,31Zm-8.84-13a4.45,4.45,0,0,1,0-6.29l2.53-2.53,6.31,6.31-5.68,5.68Zm21.56-.41,5.67,5.68-5.67,5.67-2.1,2.1-.07.07a4.48,4.48,0,0,1-6.29,0l-.07-.07-2.09-2.1-5.68-5.68,5.67-5.67,2.1-2.1.07-.07a4.48,4.48,0,0,1,6.29,0l.07.07ZM52.62,31l3.17,3.17a4.48,4.48,0,0,1,0,6.29L53.25,43l-6.31-6.31Zm-5.68-9.87,6.31-6.31,2.54,2.53a4.48,4.48,0,0,1,0,6.29l-3.17,3.17Zm-23.29,24a4.48,4.48,0,0,1-6.29,0L4.26,32.06a4.48,4.48,0,0,1,0-6.29l13.1-13.1a4.45,4.45,0,0,1,6.29,0l.07.06-2.53,2.54a7.44,7.44,0,0,0,0,10.48l3.16,3.16-3.16,3.17a7.44,7.44,0,0,0,0,10.48l2.53,2.54Zm19,8.4a4.48,4.48,0,0,1-6.29,0L27.92,45.1l6.31-6.31.06.07a7.45,7.45,0,0,0,10.49,0l.07-.07,6.31,6.31ZM74.81,32.06,61.71,45.17a4.48,4.48,0,0,1-6.29,0l-.07-.07,2.53-2.54a7.42,7.42,0,0,0,0-10.48l-3.16-3.16,3.16-3.17a7.42,7.42,0,0,0,0-10.48l-2.53-2.54.07-.06a4.45,4.45,0,0,1,6.29,0l13.1,13.1a4.45,4.45,0,0,1,0,6.29Z"></path>
               <path d="M34.22,23.24l2.54,2.53a4.48,4.48,0,0,1,0,6.29l-2.53,2.53,2.09,2.1,2.54-2.53a9.24,9.24,0,0,0,.68-.84,6.75,6.75,0,0,0,.68.84l2.53,2.53,2.1-2.1-2.54-2.53a4.48,4.48,0,0,1,0-6.29l2.54-2.53-2.1-2.1-2.53,2.53a6.75,6.75,0,0,0-.68.84,9.24,9.24,0,0,0-.68-.84l-2.54-2.53Z"></path>
-              <path d="M93.9,57.54V46.87h.6V57.54Z"></path>
-              <path d="M115.27,57.54l-6.61-9.46v9.46h-.58V46.87h.44l6.61,9.46V46.87h.58V57.54Z"></path>
-              <path d="M131.87,57.77a4.56,4.56,0,0,1-3.11-1.11l.1-.58a4.73,4.73,0,0,0,3,1.14,2.38,2.38,0,0,0,2.56-2.35c0-1.26-.6-2.08-2.74-2.7-1.71-.5-2.65-1.53-2.65-3a2.72,2.72,0,0,1,3-2.58,4.46,4.46,0,0,1,2.44.8l-.12.53a4.59,4.59,0,0,0-2.32-.78c-1.5,0-2.38.85-2.38,2,0,1,.47,1.86,2.31,2.38s3.08,1.53,3.08,3.22A3,3,0,0,1,131.87,57.77Z"></path>
-              <path d="M151.12,47.42V57.54h-.61V47.42h-3.78v-.55h8.17v.55Z"></path>
-              <path d="M171.09,53.25v4.29h-.6V53.25l-3.85-6.38h.67l3.48,5.76,3.48-5.76h.66Z"></path>
-              <path d="M191.05,47.42V57.54h-.6V47.42h-3.79v-.55h8.17v.55Z"></path>
-              <path d="M211.6,57.78c-2.53,0-4.21-1.61-4.21-5.19V46.87H208v5.74c0,3.2,1.46,4.61,3.6,4.61s3.61-1.41,3.61-4.61V46.87h.6v5.72C215.81,56.17,214.15,57.78,211.6,57.78Z"></path>
-              <path d="M232.76,47.42V57.54h-.6V47.42h-3.78v-.55h8.16v.55Z"></path>
+              <path class="instytut" d="M93.9,57.54V46.87h.6V57.54Z"></path>
+              <path class="instytut" d="M115.27,57.54l-6.61-9.46v9.46h-.58V46.87h.44l6.61,9.46V46.87h.58V57.54Z"></path>
+              <path class="instytut" d="M131.87,57.77a4.56,4.56,0,0,1-3.11-1.11l.1-.58a4.73,4.73,0,0,0,3,1.14,2.38,2.38,0,0,0,2.56-2.35c0-1.26-.6-2.08-2.74-2.7-1.71-.5-2.65-1.53-2.65-3a2.72,2.72,0,0,1,3-2.58,4.46,4.46,0,0,1,2.44.8l-.12.53a4.59,4.59,0,0,0-2.32-.78c-1.5,0-2.38.85-2.38,2,0,1,.47,1.86,2.31,2.38s3.08,1.53,3.08,3.22A3,3,0,0,1,131.87,57.77Z"></path>
+              <path class="instytut" d="M151.12,47.42V57.54h-.61V47.42h-3.78v-.55h8.17v.55Z"></path>
+              <path class="instytut" d="M171.09,53.25v4.29h-.6V53.25l-3.85-6.38h.67l3.48,5.76,3.48-5.76h.66Z"></path>
+              <path class="instytut" d="M191.05,47.42V57.54h-.6V47.42h-3.79v-.55h8.17v.55Z"></path>
+              <path class="instytut" d="M211.6,57.78c-2.53,0-4.21-1.61-4.21-5.19V46.87H208v5.74c0,3.2,1.46,4.61,3.6,4.61s3.61-1.41,3.61-4.61V46.87h.6v5.72C215.81,56.17,214.15,57.78,211.6,57.78Z"></path>
+              <path class="instytut" d="M232.76,47.42V57.54h-.6V47.42h-3.78v-.55h8.16v.55Z"></path>
             </svg>
           </div>
         </header>
+
+        <!-- Introduction: on the title background, the brain spinning behind the card. -->
+        <section class="wstep" aria-label="Wstęp">
+          <div class="wstep__card">
+            <p>Wracasz do tego samego maila po kilka razy. W połowie dnia coraz trudniej ci się skupić. To po prostu biologia. Twój mózg nie pracuje z taką samą intensywnością przez całą dobę. Im lepiej poznasz ten rytm, tym łatwiej będzie ci pracować, uczyć się, odpoczywać i podejmować decyzje.</p>
+            <p>W tym multimedialnym projekcie sprawdzisz kondycję swojej pamięci i koncentracji, zobaczysz, co dzieje się w mózgu od pobudki do snu i dowiesz się, jak wykorzystać i wspomóc naturalny rytm organizmu. To praktyczny przewodnik po 24 godzinach pracy mózgu oparty na najnowszej wiedzy naukowej i komentarzach ekspertów.</p>
+          </div>
+        </section>
 
         <!-- Test: on the title background, the brain spinning behind the card. -->
         <section class="quiz" id="quiz" aria-label="Test">
@@ -864,7 +1121,7 @@
         <section class="step" data-time="06:00" data-yaw="15" data-pitch="14">
           <div class="step-text">
             <p>Mózg nie pracuje przez całą dobę tak samo. Różne jego obszary osiągają szczyt aktywności o różnych porach dnia i nocy.</p>
-            <p>Słońce na pasku u góry pokazuje porę doby, a kolory na modelu – obszary, o których właśnie czytasz.</p>
+            <p>Zegar u góry pokazuje porę doby, a kolorem na modelu wyróżniamy obszary, o których właśnie czytasz.</p>
           </div>
         </section>
 
@@ -876,7 +1133,7 @@
 
         <section class="step" data-time="10:00" data-highlight="prefrontal" data-yaw="-62" data-pitch="10" data-zoom="1.08">
           <div class="step-text">
-            <p><mark data-token="prefrontal">Kora przedczołowa</mark> odpowiada za planowanie, pamięć roboczą i podejmowanie decyzji. Sprawność tych funkcji zależy od pory dnia i od tego, ile godzin minęło od przebudzenia. U osób o pośrednim chronotypie zwykle jest ona najwyższa przed południem, jednak u „sów” – trochę później.</p>
+            <p><mark data-token="prefrontal">Kora przedczołowa</mark> odpowiada za planowanie, pamięć roboczą i podejmowanie decyzji. Sprawność tych funkcji zależy od pory dnia i od tego, ile godzin minęło od przebudzenia. U osób o pośrednim chronotypie zwykle jest ona najwyższa przed południem, jednak u „sów” — trochę później.</p>
           </div>
         </section>
 
@@ -896,7 +1153,7 @@
         <section class="step" data-time="17:00" data-highlight="motor" data-yaw="-135" data-pitch="40" data-zoom="1.04">
           <div class="step-text">
             <p><mark data-token="motor">Kora ruchowa</mark> odpowiada za planowanie, kontrolę oraz realizację świadomych ruchów mięśni szkieletowych. U wielu osób późne popołudnie to pora najkrótszego czasu reakcji i najlepszej koordynacji.</p>
-            <p>U poddanych badaniu sportowców szczyt formy zależał jednak bardziej od tego, ile godzin minęło od przebudzenia, niż od godziny na zegarze, a różnice w ciągu dnia sięgały 26%.</p>
+            <p>U poddanych badaniu sportowców szczyt formy zależał jednak bardziej od tego, ile godzin minęło od przebudzenia, niż od godziny na zegarze, a różnice w ciągu dnia sięgały 26 proc.</p>
           </div>
         </section>
 
@@ -935,22 +1192,243 @@
         <section class="step" data-time="06:00" data-highlight="scn hypothalamus" data-yaw="-408" data-pitch="-8" data-zoom="1.25">
           <div class="step-text">
             <p>O świcie światło znów dociera do siatkówki, <mark data-token="scn">jądro nadskrzyżowaniowe</mark> hamuje wydzielanie melatoniny i zaczyna się kolejna doba.</p>
+            <p class="step-note">Do grafiki wybraliśmy obszary mózgu, które są warte podkreślenia o danej porze dnia. Nie oznacza to, że inne obszary nie są w tym czasie aktywne. Godziny dotyczą osób o pośrednim chronotypie. U „skowronków” procesy te zachodzą wcześniej, u „sów” później.</p>
           </div>
         </section>
       </div>
     </section>
 
-    <p class="note">Do grafiki wybraliśmy obszary mózgu, które są warte podkreślenia o danej porze dnia. Nie oznacza to, że inne obszary nie są w tym czasie aktywne. Godziny dotyczą osób o pośrednim chronotypie. U „skowronków” procesy te zachodzą wcześniej, u „sów” później.</p>
+    <article class="article">
+      <h2 class="article__title"><span class="article__sticker">24</span> godziny z życia mózgu</h2>
+      <p class="article__lead">Co dokładnie dzieje się w Twojej głowie o 7:00, 10:00, 14:00 i 21:00? Poznaj naukowo opracowany przewodnik po 24 godzinach pracy mózgu. Osobiście przetestowała go dziennikarka Joanna Barańska.</p>
+      <div class="author">
+        <img class="author__photo" data-src="assets/joanna-baranska.jpg?v=20261018-1455" alt="" width="360" height="360" loading="lazy" decoding="async">
+        <p class="author__name">Joanna Barańska</p>
+      </div>
+      <p>Mózg to jeden z organów, który zużywa w ciągu dnia najwięcej naszej energii. „Steruje” wszystkim, co robimy — choć często wolelibyśmy, żeby było odwrotnie. Zachowaniem i przyzwyczajeniami chcemy zmusić mózg do tego, żeby wycisnął z siebie wszystko. Maksymalna aktywność całą dobę, zero zmęczenia, sygnały o potrzebach zepchnięte na nieokreśloną przyszłość. <strong>A wystarczy wiedzieć, jak dobrze go traktować, by nam się odwdzięczył.</strong></p>
+      <p>Artykuły naukowe i eksperci, z którymi rozmawiam, mówią, żeby zacząć od obserwacji. Czy zaraz po wstaniu czujesz się wypoczęta? Kiedy czujesz zmęczenie? O której godzinie wzrasta kreatywność? Wybieram obiekt badawczy, do którego mam stale dostęp — siebie.</p>
+      <p>Postanawiam obserwować swoje odczucia w dniu roboczym, gdy mogę pracować z domu. W spokojniejszym otoczeniu łatwiej będzie mi zorientować się, gdy moja wydajność spadnie (zazwyczaj jest i tak dużo niższa w hałaśliwym biurowym open space).</p>
+      <div class="clock" style="--sky: #f3a76b">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(210)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">7:00</span> Rano</h2>
+      </div>
+      <p>Wstaję o 7 rano, po ok. siedmiu godzinach snu. Czuję, że nie był to wystarczający czas, dlatego parzę i wypijam czarną kawę. Zaczynam pracę o 7.30. Nie zawsze odsłaniam okna.</p>
+      <p><strong>Jak się okazuje, popełniłam już kilka kluczowych błędów.</strong></p>
+      <p>Chodzi o godzinę wstawania? Nie. — Jeśli potraktujemy temat w sposób ogólny, to można powiedzieć, że mózg nie ma jednej najlepszej godziny. Ale osadźmy tę kwestię w rytmie dobowym, bo to coś, co faktycznie możemy obserwować i mierzyć — mówi dr med. Anna Kieszkowska-Grudny, psycholożka kliniczna, neuropsycholożka i certyfikowana psychoterapeutka PTTPB oraz EABCT, prezeska i współzałożycielka Instytutu BezStresu.</p>
+      <p>— Sprawność naszego mózgu zależy przede wszystkim od dwóch mechanizmów. <strong>Pierwszy to cyrkadiana, zegar biologiczny, a drugi to narastająca presja snu.</strong> Ta zaczyna rosnąć już od momentu przebudzenia. Innymi słowy: od rana organizm stopniowo buduje potrzebę snu, która powinna osiągnąć maksimum wieczorem. Dodam, że w nauce od dawna funkcjonuje tak zwany dwuprocesowy model regulacji snu i czuwania — dodaje badaczka.</p>
+      <p>Dr Kieszkowska-Grudny wyjaśnia, że za zegar biologiczny odpowiada niewielka struktura znajdująca się w podwzgórzu — jądro nadskrzyżowaniowe. Tworzy je około 20 tys. neuronów. Co ciekawe, ich naturalny rytm jest nieco dłuższy niż 24 godziny, dlatego każdego dnia musi być korygowany przez sygnały docierające ze środowiska. <strong>Najważniejszym z nich jest światło.</strong></p>
+      <p>Światło odbierane przez siatkówkę synchronizuje cały organizm: wydzielanie melatoniny, kortyzolu, zmiany temperatury ciała i wiele innych procesów biologicznych. Można powiedzieć, że ten niewielki obszar mózgu pełni funkcję głównego dyrygenta naszego biologicznego rytmu. Jednocześnie działa drugi mechanizm, czyli homeostaza snu. W czasie czuwania gromadzi się adenozyna — substancja, która jest jednym z najważniejszych biologicznych wskaźników zmęczenia. Im więcej adenozyny, tym większa presja snu.</p>
+      <p>— Do tego wszystkiego dochodzą nasze rytuały, jak picie kawy o poranku — niektórzy robią to zaraz po przebudzeniu — opowiada dr Kieszkowska-Grudny. — Kofeina działa jak antagonista receptorów adenozynowych. W praktyce oznacza to, że pijąc kawę zaraz po wstaniu z łóżka, oszukujemy nasz mózg i cały organizm. Nie czujemy zmęczenia tak wyraźnie, ale to nie znaczy, że potrzeba snu rzeczywiście znika. Dlatego często powtarzam osobom, które zmagają się ze zmęczeniem albo problemami ze snem: jeśli to możliwe, jeśli już w ogóle nie możesz bez kawy żyć, to <strong>nie pij pierwszej kawy natychmiast po przebudzeniu. Spróbuj przesunąć ją o dwie czy trzy godziny.</strong></p>
+      <p>A co jeść? Northwestern Medicine (NM), instytucja zajmująca się opieką zdrowotną Uniwersytetu Northwestern z siedzibą w Chicago, przygotowała zestawienie pokarmów, które najlepiej wspierają funkcjonowanie mózgu.</p>
+      <figure class="info">
+        <h3 class="info__title">Śniadanie dla mózgu</h3>
+        <ul class="info__grid">
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/ryba.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Tłuste ryby</strong>Łosoś, pstrąg, sardynki. Kwasy omega‑3, zwłaszcza DHA: budują komórki nerwowe i wspierają komunikację między neuronami.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/jajo.webp?v=20261018-1546" alt="" loading="lazy" decoding="async" style="--photo: 38px"></span><span><strong>Jajka</strong>Białko, cholina wspierająca pamięć i tryptofan, z którego powstaje serotonina, neuroprzekaźnik nastroju.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/borowki.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Borówki</strong>Przeciwutleniacze, zwłaszcza flawonoidy, które poprawiają przepływ krwi w mózgu.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/kawa.webp?v=20261018-1546" alt="" loading="lazy" decoding="async" style="--photo: 40px"></span><span><strong>Kawa</strong>Polifenole mogą działać ochronnie na mózg. Ale kawa nie zastąpi pełnowartościowego posiłku.</span></li>
+        </ul>
+        <figcaption class="info__source">Źródło: Northwestern Medicine</figcaption>
+      </figure>
+      <p>Przygotowuję więc sobie trzy jajka na miękko, 100 g wędzonego łososia, miseczkę borówek.</p>
+      <div class="clock" style="--sky: #a8d5f2">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(300)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">10:00</span> Przedpołudnie</h2>
+      </div>
+      <p>Trzon mojej pracy polega na dokładnym czytaniu i redagowaniu podsyłanych mi tekstów. Mają ok. 20 tys. znaków, ze spacjami. Również tłumaczę, rzadziej piszę własne artykuły. Sprawdzam dwa komunikatory oraz pocztę. Uczestniczę w spotkaniach; pierwsze z nich odbywa się o poranku. Ok. godz. 10 mój mózg domaga się przerwy. Odczuwam pierwsze zmęczenie.</p>
+      <p>Jak wskazuje w swoim artykule „Digital multitasking and hyperactivity: unveiling the hidden costs to brain health” („Cyfrowy multitasking i nadmierne pobudzenie: ukryte koszty dla zdrowia mózgu”, dostępny w czasopiśmie naukowym „Annals of Medicine and Surgery”) biochemik i biolog molekularny M.K. Hasan wykonywanie kilku czynności cyfrowych jednocześnie lub bardzo szybkie przełączanie się między nimi, sprawia, że mózg nie wykonuje wielu zadań równocześnie, a bardzo szybko przełącza uwagę między nimi. Wymaga to od niego dodatkowych zasobów poznawczych — za co płaci określoną cenę. Mózg doświadcza wówczas obciążenia poznawczego, a więc zwiększa wysiłek, jaki musi wykonać pamięć robocza. Konsekwencje? Spada koncentracja, szybciej się rozpraszamy, gorzej podejmujemy decyzje, szybciej męczymy się psychicznie. Biochemik przywołuje badania, które sugerują, że koszty częstego przełączania się między zadaniami <strong>mogą pochłaniać nawet do 40 proc. produktywnego czasu pracy</strong>.</p>
+      <blockquote class="pull">Wykonywanie kilku czynności cyfrowych jednocześnie lub bardzo szybkie przełączanie się między nimi sprawia, że mózg nie wykonuje wielu zadań równocześnie, a bardzo szybko przełącza uwagę między nimi.</blockquote>
+      <p>To nie wszystko. Osoby, które każdego dnia angażują się w cyfrowy multitasking, częściej doświadczają przewlekłego lęku i stresu; opisują też symptomy wskazujące na nasilające się epizody depresyjne. Jak zauważa autor, może to wynikać z przeciążenia poznawczego i nieustannego, ciągłego pobudzania układu nerwowego.</p>
+      <p>Hasan opisuje, że badania z wykorzystaniem rezonansu magnetycznego (fMRI) i elektroencefalografii (EEG) dają podstawy do stwierdzenia, że podczas intensywnego multitaskingu spada jakość pracy obszarów odpowiadających za kontrolę poznawczą, a silniej aktywowane są regiony związane z pobudzeniem i reakcją na stres. Ogółem: wzrasta obciążenie mózgu.</p>
+      <p>Pod koniec dnia będę czuła, jakby ktoś nasypał mi żwiru do głowy. Czy to znaczy, że mój mózg męczy się jak mięsień?</p>
+      <p>— Mechanizm jest trochę inny, ale istnieje pewne podobieństwo — tłumaczy dr Kieszkowska-Grudny. — Podczas intensywnego wysiłku umysłowego w korze przedczołowej gromadzi się glutaminian. To neuroprzekaźnik niezbędny do komunikacji między neuronami. Jest nam potrzebny, ale jego nadmiar staje się problemem. Jeśli mamy go zbyt dużo, odczuwamy zmęczenie poznawcze, mgłę mózgową, a także mamy trudności z koncentracją i podejmowaniem decyzji.</p>
+      <p>Neuropsycholożka dodaje: — Można powiedzieć, że mózg sam uruchamia mechanizm bezpieczeństwa. Zaczyna hamować własną aktywność, żeby chronić neurony przed przeciążeniem. Mózg celowo zwalnia, a my odczuwamy silne wyczerpanie psychiczne. Jeżeli długotrwale ignorujemy te sygnały, konsekwencje mogą być poważniejsze. Wiemy, że przewlekły stres wiąże się z mierzalnymi zmianami w strukturach mózgu. Na szczęście są to zmiany odwracalne. A przynajmniej przez pewien czas.</p>
+      <p>Jak możemy odwrócić ten proces? I idąc do źródła problemu, co zrobić, żeby się nie stresować?</p>
+      <p>Dr Kieszkowska-Grudny podkreśla, że nie istnieją magiczne rozwiązania.— Oczywiście są strategie, które pomagają tu i teraz. <strong>Najprostszą z nich jest oddech.</strong> Regularne zatrzymanie się na kilka spokojnych oddechów naprawdę ma znaczenie. Ale głębsza praca dotyczy naszych przekonań, nawyków i codziennych rytuałów. Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy. Dlatego tak ważne są regularny sen, higiena rytmu dobowego czy praktyki uważności. I oczywiście rozpoznanie, jakie znaczenie nadajemy określonym sytuacjom.</p>
+      <blockquote class="pull">Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy.<cite>dr Anna Kieszkowska‑Grudny</cite></blockquote>
+      <p>Odchodzę od ekranu, robię kilka ćwiczeń naprzemiennych (proste ćwiczenia fizyczne angażujące przeciwne strony ciała), wyglądam przez okno. Przez ok. pięć minut patrzę na spadające z drzewa liście. Jest lepiej, rzeczywiście. Ale muszę wrócić do komputera.</p>
+      <div class="video" data-src="https://kobieta.onet.pl/wiadomosci/stresujacy-dzien-to-cwiczenie-moze-pomoc-ci-sie-wyciszyc/807s2t1"></div>
+      <div class="clock" style="--sky: #a8d5f2">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(0)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">12:00</span> Południe</h2>
+      </div>
+      <p>Pomiędzy godz. 12 a 13 dopada mnie kolejna fala zmęczenia. Ta jest zdecydowanie silniejsza. Czuję, że moje możliwości poznawcze spadają. Obserwuję, że w tym czasie łatwiej o błąd, przeoczenie, nieprawidłową interpretację polecenia. Muszę się maksymalnie skoncentrować. W domu to zdecydowanie łatwiejsze. W biurze musiałabym szukać pustej sali, w której nie słyszałabym innych współpracowników czy dźwięków miasta (przez otwarte okno słychać przejeżdżające nieopodal pociągi).</p>
+      <p>W sukurs przychodzi dr Kieszkowska-Grudny.— Gdy w połowie pracy albo dyżuru dopada nas znużenie, <strong>najskuteczniejsza jest krótka, maksymalnie 10-20-minutowa drzemka</strong>— oczywiście jeśli tylko to możliwe. Już kilkanaście minut snu poprawia czujność na mniej więcej dwie godziny. W biurze, gdzie drzemka nie wchodzi w grę, najlepiej wstać od biurka i przez kilka minut energicznie się poruszyć, na przykład wejść po schodach, najlepiej w dziennym świetle.</p>
+      <p>Neuropsycholożka tłumaczy, że pomagają też regularne krótkie przerwy i wprowadzenie zwyczaju sprawdzania telefonu w kilku blokach— maksymalnie trzech— w ciągu dnia zamiast reagowania na każde powiadomienie. <strong>Kawę lepiej wypić najpóźniej około dziewięciu godzin przed snem</strong> (czyli dla osób pracujących na poranną zmianę— około godz. 14, a dla tych na nocnej zmianie— najpóźniej około północy). Poza tym zdecydowanie warto zrezygnować z pokusy sięgnięcia po słodycze „na pobudzenie”, bo w pierwszej godzinie po ich zjedzeniu czujemy się raczej bardziej zmęczeni niż rześcy.</p>
+      <p>O tym ostatnim dowiaduję się już po tym, jak— po 10-minutowej przerwie, podczas której założyłam na oczy opaskę na sen, a do uszu włożyłam zatyczki, by odciąć bodźce i pozwolić mózgowi na swoisty „oddech” — zjadłam czekoladowy batonik (45 g).</p>
+      <figure class="info">
+        <h3 class="info__title">Przekąski dla mózgu</h3>
+        <ul class="info__grid">
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/orzech.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Orzechy włoskie</strong>Można po nie sięgać częściej: mają dużo kwasów omega‑3.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/migdal.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Migdały</strong>Zdrowe tłuszcze, witaminy i minerały.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/pistacja.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Pistacje</strong>Zdrowe tłuszcze, witaminy i minerały.</span></li>
+          <li class="info__item"><span class="sticker sticker--photo" aria-hidden="true"><img data-src="assets/czekolada.webp?v=20261018-1546" alt="" loading="lazy" decoding="async"></span><span><strong>Gorzka czekolada</strong>Jeśli już czekolada, to co najmniej 85 proc. kakao. Dostarcza flawonoidów.</span></li>
+        </ul>
+        <div class="info__avoid">
+          <h4>Lepiej ograniczyć</h4>
+          <ul><li>żywność przetworzoną</li><li>słodkie batoniki</li><li>czipsy</li><li>słone przekąski</li><li>czerwone mięso</li><li>masło</li><li>sery</li><li>słodycze</li><li>żywność smażoną</li></ul>
+        </div>
+        <figcaption class="info__source">Źródło: Northwestern Medicine</figcaption>
+      </figure>
+      <p>W czerwcu 2026 r. naukowcy z Monash University, australijskiej uczelni państwowej z główną siedzibą w Melbourne, opublikowali badanie, z którego wynika, że <strong>większe spożycie żywności ultraprzetworzonej wiąże się z gorszą koncentracją uwagi i wolniejszym przetwarzaniem informacji</strong>, nawet u osób, które poza tym odżywiają się zdrowo. Co więcej, częstsze spożycie takich produktów sprzyja występowaniu czynników ryzyka demencji.</p>
+      <p>Dobrze, krok po kroku. Batonik już zjadłam, tego nie cofnę, ale mam paczkę migdałów, które otworzę, gdy znowu zrobię się głodna. Na obiad będą duszone krewetki (dyskontowe promocje potrafią pozytywnie zaskoczyć!) — prof. J. Thomas Brenna, specjalista w dziedzinie żywienia człowieka, chemii i pediatrii, w artykule z 2025 r. „Hook, Line, and Thinker: Seafood Nets Benefits for Neurocognitive Development” (czyli „Na haczyk, żyłkę i rozum: owoce morza wspierają rozwój funkcji poznawczych mózgu”) wskazuje, że spożywanie ryb i owoców morza wiąże się z realnymi korzyściami dla rozwoju funkcji poznawczych.</p>
+      <p>A dodatki? Pomidory w oliwie z oliwek (pomidory zawierają ok. 237-240 mg potasu na 100 g produktu, a oliwa z oliwek — jednonienasycone kwasy tłuszczowe i przeciwutleniacze, co pozwala wspierać funkcje poznawcze i chronić komórki nerwowe) oraz sałatka z rukoli (NM rekomenduje jarmuż, ale nienawidzę jego smaku; równocześnie podaje, że rukola należy do warzyw, których regularne spożywanie może pomagać spowalniać pogorszenie funkcji poznawczych) i ogórka.</p>
+      <div class="clock" style="--sky: #a8d5f2">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(60)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">14:00</span> Wczesne popołudnie</h2>
+      </div>
+      <p>Jest godz. 14, mózg po krótkim „doładowaniu baterii”, jakim było odcięcie się od bodźców na kilka minut, znów zaczyna zwalniać. Piję drugą tego dnia kawę, ale mam wrażenie, że wciąż jestem zmęczona— tylko „szybciej”. Serce delikatnie przyspiesza, w skroni zaczynam czuć tępe pulsowanie zbliżającego się bólu, wynikającego z przeciążenia mózgu. Codziennie przetwarzam mnóstwo informacji, przeskakuję między ekranami, odpisuję na kilku komunikatorach. Jak ostatnio usłyszałam od terapeutki— mózg zaczyna zaciągać ręczny.</p>
+      <p>Mówię dr Kieszkowskiej-Grudny, że w mojej opinii największym błędem współczesnego człowieka jest próba ciągłego stymulowania mózgu i zmuszania go do działania zamiast słuchania sygnałów, które wysyła. Ekspertka zgadza się z tym stwierdzeniem.</p>
+      <p>— Bardzo często szukamy jednej szybkiej odpowiedzi— stwierdza.— Przypomina mi się pewna sytuacja z konferencji. Rozmawiałam ze znajomą, której nie widziałam od wielu lat. W pewnym momencie podeszła do nas inna uczestniczka i zapytała, czym się zajmuję. Znajoma opowiedziała o mojej pracy związanej ze zdrowiem psychicznym i stresem. Kobieta zainteresowała się tematem i poprosiła, żebym wyjaśniła, jak pracujemy z pacjentami. Zaczęłam opowiadać o kompleksowym podejściu, personalizacji terapii, koordynacji leczenia i innowacyjnych metodach pracy. Mówiłam może przez pół minuty.</p>
+      <p>Dr Kieszkowska-Grudny wspomina, że już po kilkudziesięciu sekundach jej rozmówczyni zaczęła rozglądać się po sali i powoli wycofywać się z rozmowy. Na odchodne powiedziała tylko: „Myślałam, że da mi pani jakąś szybką radę”.</p>
+      <p>— Myślę, że ta anegdota dobrze pokazuje nasze podejście do zdrowia psychicznego. Latami nie zauważamy lub ignorujemy sygnały, które wysyła przemęczony lub potrzebujący mózg i zestresowane ciało. Kiedy cierpienie narasta, chcemy magicznej różdżki. Owszem, istnieją rozwiązania, które pomagają doraźnie. Ale <strong>jeśli chcemy naprawdę zadbać o mózg, musimy myśleć długofalowo</strong>, bo dzięki temu nasz mózg będzie w fantastycznej kondycji przez naprawdę długie lata.</p>
+      <p>Nadchodzi 15:30, czas pracy się kończy. Składam laptopa — wiem, że dla mojego mózgu będzie najlepiej, jeśli ograniczę ekrany na dziś. Muszę położyć się na 15 minut, znów zakrywam oczy, by odciąć się od dodatkowych bodźców. Zjadam resztę pomidorów i sałatki z rukoli, biorę szybki prysznic i jadę na basen.</p>
+      <div class="video" data-src="https://kobieta.onet.pl/wiadomosci/jak-poprawic-zdrowie-mozgu-polaczylismy-tdcs-z-kilkoma-cwiczeniami/qnh2dcg"></div>
+      <div class="clock" style="--sky: #a8d5f2">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(120)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">16:00</span> Popołudnie</h2>
+      </div>
+      <p>W artykule „Swimming‐related effects on cerebrovascular and cognitive function” („Wpływ pływania na krążenie mózgowe oraz funkcje poznawcze”) z 2019 r., który grupa nowozelandzkich i brytyjskich badaczy opublikowała w piśmie „Physiological Reports”, możemy przeczytać, że aktywność fizyczna w wodzie ma znaczny wpływ na funkcjonowanie mózgu. <strong>Już 20-minutowy trening pływacki o umiarkowanej intensywności zwiększa przepływ krwi przez mózg</strong> i poprawia wykonanie zadań wymagających szybkiej współpracy wzroku i ruchu. Naukowcy przypuszczają, że wynika to z połączenia kilku czynników: poziomego ułożenia ciała, zmian w oddychaniu oraz lepszego dotlenienia i ukrwienia tkanek nerwowych. Oznacza to, że w ciągu dnia możemy częściowo wpływać na sprawność poznawczą nie tylko poprzez sen i rytm dobowy, ale także poprzez odpowiednio dobraną aktywność fizyczną.</p>
+      <p>Badacze porównywali młodych pływaków i sportowców trenujących na lądzie. Analizowali przepływ krwi w tętnicy środkowej mózgu, a także wyniki testów poznawczych przeprowadzanych przed i po pływaniu. Dodajmy, że samo zanurzenie w wodzie nie wpływało znacząco na funkcje poznawcze — wszystko zmieniał dodany czynnik wysiłku. Już 20 minut pływania o umiarkowanej intensywności dało 4-procentową poprawę wyników w zadaniach wymagających koordynacji wzrokowo-ruchowej. Co istotne, badacze obserwowali ten efekt nie tylko u pływaków trenujących regularnie, ale i u osób specjalizujących się w innych dyscyplinach. Dlatego autorzy badania podkreślają, że badanie obrazuje krótkie, natychmiastowe zmiany zachodzące w mózgu — nie zaś wpływ regularnego pływania na funkcjonowanie naczyń mózgowych. Ale jest to kwestia warta dokładnego sprawdzenia, zwłaszcza w kontekście profilaktyki chorób neurodegeneracyjnych.</p>
+      <div class="clock" style="--sky: #ef8a63">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(180)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">18:00</span> Wieczór</h2>
+      </div>
+      <p>Gdy wracam do domu, jest godz. 18. Piję kefir (białko po treningu!), jem trzy grzanki z pełnoziarnistego pieczywa, posmarowane masłem. Do diety powinnam wkomponować warzywa kapustne (brokuły, kalafior, brukselka) — jak podaje NM, są bogate w witaminy E, witaminy K, beta-karoten, foliany, a ich regularne spożywanie może spowalniać pogorszenie funkcji poznawczych.</p>
+      <p>Łamię wcześniejsze postanowienie i otwieram komputer. Spróbuję dokończyć pracę nad wywiadem, który muszę jutro wysłać do autoryzacji. Patrzę na litery, rozbiegają się na ekranie. Staram się zrozumieć, o czym czytam, ale jest coraz trudniej. Poddaję się — wolę wstać wcześniej rano, wieczorem mój mózg odmawia posłuszeństwa. To znaczy, że jestem „skowronkiem”, prawda?</p>
+      <p>— Zwykle mówimy o skowronkach i sowach, ale tak naprawdę jest to pewne uproszczenie — wyjaśnia dr Kieszkowska-Grudny. — <strong>Nie istnieją dwie osobne grupy ludzi</strong>; powiedziałabym raczej to krańce ciągłego rozkładu, a nie dwie odrębne grupy chronotypów. Chronotyp [biologiczna preferencja organizmu dotycząca pory snu, czuwania oraz największej aktywności w ciągu doby] jest cechą realną, mierzalną i w dużej mierze dziedziczną. Wiemy z badań, że mają tu znaczenie zarówno geny związane z funkcjonowaniem zegara biologicznego, jak i wrażliwość organizmu na światło.</p>
+      <p>Ekspertka tłumaczy: — U osób preferujących aktywność wieczorną cały biologiczny harmonogram jest przesunięty. Później w ciągu dnia pojawia się melatonina, później zmienia się temperatura ciała i później pojawia się naturalna gotowość do snu. Dodajmy, że relacja między melatoniną, kortyzolem i temperaturą ciała to jak naczynia połączone. Wskaźniki te działają na zasadzie stałej wymiany — jeżeli czegoś jest za dużo, to innego musi ubywać lub może go zablokować, np. zbyt wysoki poziom kortyzolu będzie „hamulcowym” dla melatoniny i stąd mogą się pojawiać zaburzenia snu w postaci trudności z zasypianiem.</p>
+      <p>Z ciekawości dopytuję: czy chronotyp można przestawić?</p>
+      <p>— Do pewnego stopnia tak. Są bardzo ciekawe badania pokazujące, że już tydzień funkcjonowania wyłącznie w naturalnym świetle, na przykład podczas biwaku pod namiotem, <strong>może przesunąć zegar biologiczny o około dwie godziny</strong> — zdradza neuropsycholożka. Regularne godziny snu, poranne światło i ograniczenie wieczornej ekspozycji na ekrany również przynoszą wyraźne efekty.</p>
+      <p>Przed ekranami przestrzega także prestiżowy Stanford University School of Medicine. W publikacji Sharon Brock „What Excessive Screen Time Does to the Adult Brain” („Co nadmiar czasu przed ekranem robi z mózgiem osoby dorosłej”) z 2024 r. na oficjalnym portalu uczelni czytamy o badaniach wskazujących na to, że długotrwała ekspozycja na ekrany może wiązać się z pogorszeniem pamięci i zdolności uczenia się, osłabieniem koncentracji, większym ryzykiem problemów ze zdrowiem psychicznym, a także zmianami w strukturze mózgu. Co szczególnie alarmujące, naukowcy zauważyli, że u nadmiernie korzystających z ekranów młodych dorosłych zaobserwowali proces neurodegeneracyjny, jakim jest ścieńczenie kory mózgowej (zmniejszenie objętości i grubości zewnętrznej warstwy mózgu, wynikające z utraty neuronów oraz połączeń między nimi). Ten obszar mózgu odpowiada m.in. za pamięć, podejmowanie decyzji, rozwiązywanie problemów. Brock powołuje się także na inne badania, które pokazują, że osoby oglądające telewizję przez pięć lub więcej godzin dziennie częściej zapadały na choroby neurologiczne, takie jak demencja, udar czy choroba Parkinsona.</p>
+      <p>Dr Kieszkowska-Grudny dodaje: — W pracy klinicznej wykorzystujemy nierzadko terapię światłem. W moim ośrodku stosujemy akurat nie lampy, a specjalne okulary emitujące światło o fali określonej długości, dzięki czemu można stosunkowo szybko przesunąć rytm dobowy. To jednak nie usuwa genetycznych predyspozycji. Możemy wpływać na ich ekspresję, ale nie możemy całkowicie zmienić natury danego chronotypu. Zresztą tę technologię wykorzystujemy także u osób, które szybciej chcą pokonać jet lag lub doświadczają depresji sezonowej (czyli tzw. sezonowych zaburzeń afektywnych, SAD).</p>
+      <p>Neuropsycholożka podkreśla, że <strong>osoba funkcjonująca późno nie jest z definicji leniwa</strong>, choć niektórzy uważają, że nie może lub nie chce się zabrać do pracy. Bardzo często po prostu żyje zgodnie ze swoim biologicznym zegarem.</p>
+      <p>Na koniec dr Kieszkowska-Grudny wtrąca jeszcze jeden ciekawy aspekt: — Nie zapominajmy o wieku. Dzieci zazwyczaj funkcjonują jak skowronki, ale w okresie dojrzewania organizm przesuwa się w stronę wieczorności. Ten proces osiąga maksimum mniej więcej około 20. roku życia, a później stopniowo zaczyna się odwracać.</p>
+      <div class="clock clock--night" style="--sky: #22305a">
+        <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
+          <g transform="rotate(-8.5)">
+            <rect class="clock__tile" x="-34" y="-34" width="68" height="68" rx="18"></rect>
+            <circle class="clock__dial" r="22"></circle>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-15" transform="rotate(0)"></line>
+            <line class="clock__hand" x1="0" y1="0" x2="0" y2="-10" transform="rotate(270)"></line>
+          </g>
+        </svg>
+        <h2 class="clock__label"><span class="clock__time">21:00</span> Noc</h2>
+      </div>
+      <p>Jest godz. 21 — odkładam telefon. Czytam książkę i piję szklankę wody (na pewno nie herbatę — też zawiera kofeinę, choć wielu wydaje się o tym zapominać). Żeby mój mózg prawidłowo funkcjonował, muszę spać siedem godzin lub więcej.</p>
+      <p>A co dzieje się z mózgiem po tygodniu, podczas którego śpimy po trzy lub cztery godziny dziennie?</p>
+      <p>— Bardzo dużo! — przestrzega dr Kieszkowska-Grudny. — Mózg stanowi ok. 2 proc. masy ciała, a odpowiada za ok. 20 proc. spoczynkowego zużycia tlenu. Jest organem, który zużywa całkiem spore ilości energii — a konkretnie, potrzebuje, nawet 100-120 g glukozy na dobę. Kiedy ograniczamy sen, zmienia się jego chemia.</p>
+      <p>Badaczka używa dość szokującego porównania. — Wiemy między innymi, że <strong>po około 17 godzinach ciągłego czuwania nasza sprawność psychomotoryczna zaczyna przypominać tę obserwowaną po spożyciu około 0,5 promila alkoholu</strong>. Gorzej interpretujemy bodźce, wolniej reagujemy i popełniamy więcej błędów. Jako punkt odniesienia: w Polsce dopuszczalny limit alkoholu we krwi kierowcy wynosi 0,2 promila. Człowiek po nocy, podczas której spał mniej niż sześć godzin, czuje się tak, jakby znacznie przekroczył tę dawkę. Dodatkowo ciało migdałowate, struktura odpowiedzialna za reakcje emocjonalne, staje się znacznie bardziej aktywne. W praktyce oznacza to większą impulsywność i mniejszą odporność na stres.</p>
+      <p>Kilka razy zdarzyło mi się obudzić ok. godz. 4 czy 5 rano. Był to najczęściej stresujący czas. Nie mogłam wtedy zasnąć ponownie. Dr Kieszkowska-Grudny wyjaśnia, że to tzw. zakazana strefa snu, która trwa mniej więcej od godz. 3 do 6 rano.</p>
+      <p>— To mechanizm ochronny — opisuje ekspertka. — W tym czasie może być nam chwilowo trudniej zasnąć, bo organizm daje dodatkowy sygnał pobudzenia, który ma pomóc dotrwać do właściwej pory snu. Dzięki temu nie zasypiamy nagle kilka godzin przed nocnym odpoczynkiem. Dlatego, kiedy ktoś podróżuje przez różne strefy czasowe, radzi się mu: dotrwaj do czasu spoczynku, nie zasypiaj wcześniej. Chodzi o utrzymanie rytmu, a mniej o określenie godziny „lepszej na coś”. To wszystko po to, że ostatecznie <strong>dla naszej optymalnej sprawności w ciągu całego dnia liczy się długość i jakość snu</strong>. Natomiast dla długości i jakości snu, ważny jest rytm i rytuały w czasie czuwania.</p>
+      <aside class="bio">
+        <p>dr Anna Kieszkowska-Grudny — doktor nauk medycznych, psycholożka kliniczna, neuropsycholożka i certyfikowana psychoterapeutka PTTPB oraz EABCT, European EMDR Practitioner. Prezeska i współzałożycielka Minds of Hope | Instytutu BezStresu, liderka, coachka, mentorka i wykładowczyni.</p>
+        <p>Inicjatorka i dyrektorka merytoryczna Akademii Liderów Przyszłości oraz pomysłodawczyni i dyrektorka programowa studiów podyplomowych Akademia Przywództwa Kobiet LiderShe.</p>
+        <p>Niezależna ekspertka Ministerstwa Rozwoju i Technologii, wiceprzewodnicząca KIS Zdrowe Społeczeństwo oraz przewodnicząca Komisji Naukowo-Badawczej Polskiego Towarzystwa Terapii EMDR.</p>
+        <p>Pierwsza w Europie specjalistka z certyfikatem The American Institute of Stress w zakresie kompleksowej diagnozy i terapii skutków stresu.</p>
+      </aside>
+    </article>
   </main>
 
   <footer class="page-footer">
-    <p>Model 3D: Neurotorium.org © Lundbeck Foundation</p>
+    <div class="footer-inner">
+      <svg class="footer-logo" viewBox="110 245 1800 780" aria-hidden="true">
+        <defs>
+          <linearGradient id="footGaugeBand" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#c24f00"></stop>
+            <stop offset="1" stop-color="#e36800"></stop>
+          </linearGradient>
+        </defs>
+        <g transform="translate(1460 597) rotate(8.5)">
+          <rect x="-172" y="-184" width="344" height="368" rx="46" fill="#ff7a00" stroke="#f4f1e9" stroke-width="14"></rect>
+          <g transform="translate(0 31)">
+            <path fill="url(#footGaugeBand)" d="M -131.4 -35.2 A 136 136 0 0 1 130.1 -39.8 L 70.8 -21.6 A 74 74 0 0 0 -71.5 -19.2 Z"></path>
+            <path fill="#f08a1c" d="M -58 -15.5 A 60 60 0 0 1 57.4 -17.5 L 0 0 Z"></path>
+            <g transform="rotate(330)">
+              <path fill="#ffd200" d="M -4 -17 L 132 -3.5 Q 136 0 132 3.5 L -4 17 Z"></path>
+              <circle r="19" fill="#ffd200"></circle>
+              <circle r="4.5" fill="#b8320a"></circle>
+            </g>
+          </g>
+        </g>
+        <text class="footer-logo__text" x="603" y="495">Mózg</text>
+        <text class="footer-logo__text" x="1880" y="477" text-anchor="end">na</text>
+        <text class="footer-logo__text" x="133" y="747">pełnych</text>
+        <text class="footer-logo__text" x="1880" y="1000" text-anchor="end">obrotach</text>
+      </svg>
+      <p class="footer-block footer-line"><strong>Skład i oprawa graficzna:</strong> Michał Rogalski</p>
+      <p class="footer-block footer-line"><strong>Autorka projektu:</strong> Karolina Drogowska</p>
+      <p class="footer-block footer-line"><strong>Autorka tekstu:</strong> Joanna Barańska</p>
+      <p class="footer-block footer-line"><strong>Autorka treści wideo:</strong> Jaśmina Marczewska</p>
+      <p class="footer-block footer-line"><strong>Podziękowania:</strong> Marcin Marczak</p>
+      <p class="footer-block footer-line"><strong>Model 3D:</strong> Neurotorium.org © Lundbeck Foundation</p>
+      <div class="footer-block footer-title">Patronat merytoryczny:</div>
+      <p class="footer-block">Minds of Hope | Instytut BezStresu</p>
+        <svg class="footer-partner" viewBox="0 0 316.29 57.83" role="img" aria-label="Bez stresu">
+          <path d="M93.9,5.08a1.59,1.59,0,0,1,1.59-1.59h8.38c6.14,0,8.76,3.57,8.76,7.9a8,8,0,0,1-3.17,5.94,8.23,8.23,0,0,1,4.78,7.5c0,4.88-3,8.86-9.87,8.86H95.49a1.6,1.6,0,0,1-1.59-1.6Zm10,10.89c3.77,0,4.93-2.26,4.93-4.58s-1.16-4.53-4.93-4.53H97.93V16Zm.5,14.34c4.53,0,5.89-2.71,5.89-5.48s-1.36-5.49-5.89-5.49H97.93v11Z"></path>
+          <path d="M123.85,31.84V13.74a1.85,1.85,0,0,1,1.85-1.85h10.41a1.49,1.49,0,0,1,1.49,1.49h0a1.49,1.49,0,0,1-1.49,1.48h-8.58V20.7h6.77a1.49,1.49,0,0,1,1.48,1.49h0a1.48,1.48,0,0,1-1.48,1.48h-6.77v7h8.58a1.49,1.49,0,0,1,1.49,1.48h0a1.49,1.49,0,0,1-1.49,1.49H125.7A1.85,1.85,0,0,1,123.85,31.84Z"></path>
+          <path d="M249,31.84V13.74a1.85,1.85,0,0,1,1.85-1.85h10.41a1.49,1.49,0,0,1,1.48,1.49h0a1.48,1.48,0,0,1-1.48,1.48H252.7V20.7h6.77A1.49,1.49,0,0,1,261,22.19h0a1.48,1.48,0,0,1-1.49,1.48H252.7v7h8.59a1.48,1.48,0,0,1,1.48,1.48h0a1.49,1.49,0,0,1-1.48,1.49H250.88A1.85,1.85,0,0,1,249,31.84Z"></path>
+          <path d="M162.08,14.17,151.29,30.72h9.49a1.48,1.48,0,0,1,1.48,1.48h0a1.49,1.49,0,0,1-1.48,1.49H148.13a1.47,1.47,0,0,1-1.47-1.48h0a1.44,1.44,0,0,1,.24-.8l10.83-16.55h-9.49a1.48,1.48,0,0,1-1.48-1.48h0a1.49,1.49,0,0,1,1.48-1.49h12.6a1.48,1.48,0,0,1,1.48,1.48h0A1.53,1.53,0,0,1,162.08,14.17Z"></path>
+          <path d="M171.3,29.73l0-.15a1.63,1.63,0,0,1,2.56-.91,12,12,0,0,0,7.24,2.4c3.58,0,6.35-2,6.35-5.29,0-3.07-1.51-4.78-7.15-6.29s-8.41-4.58-8.41-8.8,3.52-7.86,9.72-7.86a14,14,0,0,1,7.19,2.05,1.64,1.64,0,0,1,.7,1.83h0a1.63,1.63,0,0,1-2.34,1,12.31,12.31,0,0,0-5.55-1.58c-3.78,0-5.94,1.76-5.94,4.58,0,2.16,1.36,4,6.09,5.23,6.49,1.71,9.46,4.53,9.46,9.51,0,5.89-4.93,8.91-10.12,8.91a14.75,14.75,0,0,1-9.27-3A1.61,1.61,0,0,1,171.3,29.73Z"></path>
+          <path d="M207.23,14.86v17a1.84,1.84,0,0,1-1.84,1.84h0a1.84,1.84,0,0,1-1.83-1.84v-17h-6.07A1.49,1.49,0,0,1,196,13.38h0a1.49,1.49,0,0,1,1.49-1.49H213.3a1.49,1.49,0,0,1,1.48,1.49h0a1.48,1.48,0,0,1-1.48,1.48Z"></path>
+          <path d="M236.33,33l-5.64-8.09h-3.32V32a1.68,1.68,0,0,1-1.68,1.68h-.32A1.68,1.68,0,0,1,223.69,32V13.59a1.7,1.7,0,0,1,1.7-1.7h6.21c5.08,0,7.24,3,7.24,6.5a6,6,0,0,1-4.43,6.09L239.08,31a1.68,1.68,0,0,1-1.37,2.65h0A1.68,1.68,0,0,1,236.33,33Zm-9-10.91h3.87c3,0,4-1.66,4-3.67s-1-3.68-4-3.68h-3.87Z"></path>
+          <path d="M279.34,34.14a11.45,11.45,0,0,1-6.74-2,1.42,1.42,0,0,1-.52-1.51l0-.1a1.42,1.42,0,0,1,2.16-.81,8.71,8.71,0,0,0,5.07,1.65c2.37,0,4.23-1.26,4.23-3.42,0-2-1.06-3.07-4.88-4.08-4.33-1.11-6.25-3.42-6.25-6.49,0-3.37,2.72-5.94,7.3-5.94a10.7,10.7,0,0,1,5.3,1.43,1.41,1.41,0,0,1,.65,1.63h0a1.42,1.42,0,0,1-2,.88,9.29,9.29,0,0,0-4-1.07c-2.46,0-3.87,1.11-3.87,2.92,0,1.36.9,2.51,4.08,3.32,4.88,1.31,7,3.37,7,7.05C287,32,283.27,34.14,279.34,34.14Z"></path>
+          <path d="M306.58,34.29c-5.69,0-9.77-3.27-9.77-10.67V13.71a1.81,1.81,0,0,1,1.81-1.82h.15a1.82,1.82,0,0,1,1.82,1.82v9.86c0,5.18,2.31,7.55,6,7.55s6-2.37,6-7.55V13.71a1.81,1.81,0,0,1,1.81-1.82h0a1.81,1.81,0,0,1,1.81,1.82v9.91C316.29,31,312.26,34.29,306.58,34.29Z"></path>
+          <path d="M76.91,23.67l-13.1-13.1a7.45,7.45,0,0,0-10.49,0l-.07.07L44.78,2.16a7.45,7.45,0,0,0-10.49,0l-8.47,8.48-.07-.07a7.44,7.44,0,0,0-10.48,0L2.16,23.67a7.45,7.45,0,0,0,0,10.49l13.11,13.1a7.44,7.44,0,0,0,10.48,0l.07-.07,8.47,8.48a7.45,7.45,0,0,0,10.49,0l8.47-8.48.07.07a7.45,7.45,0,0,0,10.49,0l13.1-13.1A7.45,7.45,0,0,0,76.91,23.67ZM36.39,4.26a4.48,4.48,0,0,1,6.29,0l8.48,8.47L44.85,19,44.78,19a7.42,7.42,0,0,0-10.49,0l-.07.06-6.3-6.31ZM32.13,36.69,25.82,43l-2.53-2.53a4.45,4.45,0,0,1,0-6.29L26.45,31Zm-8.84-13a4.45,4.45,0,0,1,0-6.29l2.53-2.53,6.31,6.31-5.68,5.68Zm21.56-.41,5.67,5.68-5.67,5.67-2.1,2.1-.07.07a4.48,4.48,0,0,1-6.29,0l-.07-.07-2.09-2.1-5.68-5.68,5.67-5.67,2.1-2.1.07-.07a4.48,4.48,0,0,1,6.29,0l.07.07ZM52.62,31l3.17,3.17a4.48,4.48,0,0,1,0,6.29L53.25,43l-6.31-6.31Zm-5.68-9.87,6.31-6.31,2.54,2.53a4.48,4.48,0,0,1,0,6.29l-3.17,3.17Zm-23.29,24a4.48,4.48,0,0,1-6.29,0L4.26,32.06a4.48,4.48,0,0,1,0-6.29l13.1-13.1a4.45,4.45,0,0,1,6.29,0l.07.06-2.53,2.54a7.44,7.44,0,0,0,0,10.48l3.16,3.16-3.16,3.17a7.44,7.44,0,0,0,0,10.48l2.53,2.54Zm19,8.4a4.48,4.48,0,0,1-6.29,0L27.92,45.1l6.31-6.31.06.07a7.45,7.45,0,0,0,10.49,0l.07-.07,6.31,6.31ZM74.81,32.06,61.71,45.17a4.48,4.48,0,0,1-6.29,0l-.07-.07,2.53-2.54a7.42,7.42,0,0,0,0-10.48l-3.16-3.16,3.16-3.17a7.42,7.42,0,0,0,0-10.48l-2.53-2.54.07-.06a4.45,4.45,0,0,1,6.29,0l13.1,13.1a4.45,4.45,0,0,1,0,6.29Z"></path>
+          <path d="M34.22,23.24l2.54,2.53a4.48,4.48,0,0,1,0,6.29l-2.53,2.53,2.09,2.1,2.54-2.53a9.24,9.24,0,0,0,.68-.84,6.75,6.75,0,0,0,.68.84l2.53,2.53,2.1-2.1-2.54-2.53a4.48,4.48,0,0,1,0-6.29l2.54-2.53-2.1-2.1-2.53,2.53a6.75,6.75,0,0,0-.68.84,9.24,9.24,0,0,0-.68-.84l-2.54-2.53Z"></path>
+          <path class="instytut" d="M93.9,57.54V46.87h.6V57.54Z"></path>
+          <path class="instytut" d="M115.27,57.54l-6.61-9.46v9.46h-.58V46.87h.44l6.61,9.46V46.87h.58V57.54Z"></path>
+          <path class="instytut" d="M131.87,57.77a4.56,4.56,0,0,1-3.11-1.11l.1-.58a4.73,4.73,0,0,0,3,1.14,2.38,2.38,0,0,0,2.56-2.35c0-1.26-.6-2.08-2.74-2.7-1.71-.5-2.65-1.53-2.65-3a2.72,2.72,0,0,1,3-2.58,4.46,4.46,0,0,1,2.44.8l-.12.53a4.59,4.59,0,0,0-2.32-.78c-1.5,0-2.38.85-2.38,2,0,1,.47,1.86,2.31,2.38s3.08,1.53,3.08,3.22A3,3,0,0,1,131.87,57.77Z"></path>
+          <path class="instytut" d="M151.12,47.42V57.54h-.61V47.42h-3.78v-.55h8.17v.55Z"></path>
+          <path class="instytut" d="M171.09,53.25v4.29h-.6V53.25l-3.85-6.38h.67l3.48,5.76,3.48-5.76h.66Z"></path>
+          <path class="instytut" d="M191.05,47.42V57.54h-.6V47.42h-3.79v-.55h8.17v.55Z"></path>
+          <path class="instytut" d="M211.6,57.78c-2.53,0-4.21-1.61-4.21-5.19V46.87H208v5.74c0,3.2,1.46,4.61,3.6,4.61s3.61-1.41,3.61-4.61V46.87h.6v5.72C215.81,56.17,214.15,57.78,211.6,57.78Z"></path>
+          <path class="instytut" d="M232.76,47.42V57.54h-.6V47.42h-3.78v-.55h8.16v.55Z"></path>
+        </svg>
+    </div>
   </footer>
-
-  <script>
-    window.ASSET_V = '20261016-1229';
-    window.wersja = function (u) { return u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + window.ASSET_V; };
-  </script>
 
   <script>
   (function () {
@@ -1099,6 +1577,39 @@
   </script>
 
   <script>
+    // Photos further down load only after the title screen is complete.
+    window.s1Gotowe.then(function () {
+      document.querySelectorAll('img[data-src]').forEach(function (img) {
+        img.src = img.getAttribute('data-src');
+        img.removeAttribute('data-src');
+      });
+    });
+  </script>
+
+  <script>
+  (function () {
+    // The premium banner slides away once the introduction (s2) has scrolled past,
+    // and comes back when you scroll up to it.
+    var intro = document.querySelector('.wstep');
+    if (!intro) return;
+    var root = document.documentElement;
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var off = intro.getBoundingClientRect().bottom <= 0;
+      if (off === root.classList.contains('banner-off')) return;
+      root.classList.toggle('banner-off', off);
+      window.dispatchEvent(new Event('banner:toggle')); // the 3D layout measures the timeline again
+    }
+    function request() { if (ticking) return; ticking = true; window.requestAnimationFrame(update); }
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', request);
+    window.addEventListener('screen:resize', request);
+    update();
+  })();
+  </script>
+
+  <script>
   (function () {
     var bar = document.getElementById('scrollProgress');
     if (!bar) return;
@@ -1120,9 +1631,9 @@
 
   <script>
   (function () {
-    // The scroll button on the title screen takes you to the next screen: the test.
+    // The scroll button on the title screen takes you to the next screen: the introduction.
     var button = document.getElementById('scrollHint');
-    var first = document.querySelector('.quiz') || document.querySelector('.step');
+    var first = document.querySelector('.wstep') || document.querySelector('.quiz') || document.querySelector('.step');
     if (!button || !first) return;
     button.addEventListener('click', function () {
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1165,8 +1676,9 @@
       show(angleAt((now - start) / 1000));
       requestAnimationFrame(frame);
     }
+    var started = false;
     function resume() {
-      if (running || !visible || document.hidden) return;
+      if (!started || running || !visible || document.hidden) return;
       running = true;
       requestAnimationFrame(frame);
     }
@@ -1178,7 +1690,10 @@
     }
     document.addEventListener('visibilitychange', resume);
     show(MIN);
-    resume();
+    // The sweep starts when the title has come in, not while it is still hidden.
+    (window.s1Widoczny || Promise.resolve()).then(function () {
+      window.setTimeout(function () { started = true; resume(); }, 450); // once the gauge has popped on
+    });
   })();
   </script>
 
@@ -1286,8 +1801,10 @@
 
     // Film grain strength: the spread of brightness noise in display colours.
     // Neurotorium uses about 0.1. The page background gets a matching noise tile.
-    const GRAIN = 0.1;
+    // Off for now: a clean background, as in the test.
+    const GRAIN = 0;
     (function paintPageGrain() {
+      if (!GRAIN) return;
       const scale = Math.min(window.devicePixelRatio || 1, 2);
       const size = Math.round(128 * scale);
       const tile = document.createElement('canvas');
@@ -2199,7 +2716,6 @@
         };
       });
       spinDirection = Math.sign(keyframes.at(-1).yaw - keyframes[0].yaw) || -1;
-      buildTimeline(keyframes[0].time);
     }
 
     let stepCenters = [];
@@ -2290,37 +2806,34 @@
       return out;
     }
 
-    // --- Timeline: a progress bar over 24 hours with a moving sun -----------------
+    // --- Timeline: a clock running through the day --------------------------------
 
     const timelineTime = timeline.querySelector('.timeline__time');
-    const timelineSun = timeline.querySelector('.timeline__sun');
-    const timelineMoon = timeline.querySelector('.timeline__moon');
-    let timelineStart = 0;
-
-    function buildTimeline(startHours) {
-      timelineStart = startHours;
-      const ticks = timeline.querySelector('.timeline__ticks');
-      ticks.replaceChildren();
-      for (let h = 0; h <= 24; h += 3) {
-        const tick = document.createElement('span');
-        tick.style.left = `${(h / 24) * 100}%`;
-        tick.textContent = `${Math.round(startHours + h) % 24}:00`;
-        if (h % 6) tick.classList.add('is-minor');
-        ticks.append(tick);
-      }
-    }
+    const timelineMinute = timeline.querySelector('.timeline__minute');
+    const timelineHour = timeline.querySelector('.timeline__hour');
 
     let shownMinute = -1;
+    // The clock's sticker takes the colour of the sky at that hour: [hour, --sky-* colour].
+    const SKY = [[0, 'night'], [4.5, 'night'], [6, 'dawn'], [8, 'day'], [17, 'day'], [19, 'dusk'], [20.5, 'night'], [24, 'night']]
+      .map(([hour, name]) => [hour, new THREE.Color(cssVar(`--sky-${name}`))]);
+    const skyColor = new THREE.Color();
+    function skyAt(clock) {
+      const i = SKY.findIndex(([hour]) => hour > clock);
+      const [h0, c0] = SKY[i - 1];
+      const [h1, c1] = SKY[i];
+      return skyColor.copy(c0).lerp(c1, smoothstep(h0, h1, clock));
+    }
+
     function updateTimeline(hours) {
-      timeline.style.setProperty('--p', clamp((hours - timelineStart) / 24, 0, 1).toFixed(4));
       const clock = ((hours % 24) + 24) % 24;
-      const daylight = smoothstep(5.5, 7, clock) * (1 - smoothstep(19, 20.5, clock));
-      timelineSun.style.opacity = daylight.toFixed(3);
-      timelineMoon.style.opacity = (1 - daylight).toFixed(3);
+      // The hands sweep smoothly; the time beside them goes in 5-minute steps.
+      timelineMinute.setAttribute('transform', `rotate(${((clock % 1) * 360).toFixed(1)})`);
+      timelineHour.setAttribute('transform', `rotate(${((clock % 12) * 30).toFixed(1)})`);
       const minute = (Math.round(clock * 12) * 5) % 1440; // shown in 5-minute steps
       if (minute !== shownMinute) {
         shownMinute = minute;
         timelineTime.textContent = `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+        timeline.style.setProperty('--sky', `#${skyAt(minute / 60).getHexString()}`);
       }
     }
 
@@ -2379,7 +2892,7 @@
       const bannerHeight = parseFloat(cssVar('--banner-h')) || 0;
       views.title.x = width / 2;
       views.title.y = (bannerHeight + height) / 2;
-      views.title.distance = distanceFor(Math.min(width / 2, (height - bannerHeight) / 2), 0.95);
+      views.title.distance = distanceFor(Math.min(width / 2, (height - bannerHeight) / 2), 1.08);
 
       shownView = -1;
       applyView(smoothstep(0, 1, keyframes.length ? state.intro : introProgress()));
@@ -2407,7 +2920,12 @@
     // On the title screen the brain turns by itself; scrolling slows it down and
     // it lands, the short way round, on the first step's view.
     const TITLE_SPIN = 0.25; // radians per second, a turn in about 25 s
+    // When the brain first appears it spins up fast and slows down to TITLE_SPIN:
+    // SPIN_BOOST times faster at the start, the extra fading over SPIN_SETTLE seconds.
+    const SPIN_BOOST = 9;
+    const SPIN_SETTLE = 1.6;
     let titleSpin = 0;
+    let spinBorn = 0; // when the brain was first drawn, in ms
 
     // How the brain looks on the title screen comes from the theme in CSS
     // (the --s1-* brain variables in :root). Re-read on 's1:theme'.
@@ -2465,7 +2983,9 @@
 
       const landing = smoothstep(0, 1, state.intro);
       const spinning = !reduceMotion && landing < 1;
-      if (spinning) titleSpin += spinDirection * TITLE_SPIN * dt * (1 - landing);
+      if (brain && !spinBorn) spinBorn = now;
+      const boost = spinBorn ? 1 + SPIN_BOOST * Math.exp(-(now - spinBorn) / 1000 / SPIN_SETTLE) : 1;
+      if (spinning) titleSpin += spinDirection * TITLE_SPIN * boost * dt * (1 - landing);
       // Wrap only while fully on the title screen, where a whole turn is invisible.
       if (landing === 0) titleSpin = wrapAngle(titleSpin);
       applyView(landing);
@@ -2525,8 +3045,28 @@
     }, { rootMargin: '25% 0px' }).observe(visual.parentElement);
     new ResizeObserver(layout).observe(visual);
     new ResizeObserver(measureSteps).observe(stepsContainer);
+    // On the last step the clock header no longer stays pinned while the text slides
+    // under it: once the text reaches the header, the header moves up with it.
+    const timelineHead = document.querySelector('.timeline-head');
+    const lastText = steps.at(-1)?.querySelector('.step-text');
+    let headShift = null;
+    function followLastStep() {
+      if (!lastText) return;
+      const gap = 16;
+      const fromHead = lastText.getBoundingClientRect().top - overlay.getBoundingClientRect().top;
+      const shift = Math.min(0, Math.round(fromHead - timelineHead.offsetHeight - gap));
+      if (shift === headShift) return;
+      headShift = shift;
+      timelineHead.style.transform = shift ? `translateY(${shift}px)` : '';
+    }
+    window.addEventListener('scroll', followLastStep, { passive: true });
+    window.addEventListener('resize', followLastStep);
+    window.addEventListener('banner:toggle', followLastStep);
+    followLastStep();
+
     window.addEventListener('resize', layout);
     window.addEventListener('screen:resize', layout);
+    window.addEventListener('banner:toggle', layout);
     document.fonts?.ready.then(layout);
     // Until the model is ready the render loop isn't running; keep the timeline in step with the scroll.
     window.addEventListener('scroll', () => {
@@ -2556,9 +3096,11 @@
         for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = false;
         needsRender = true;
         visual.classList.add('is-ready');
+        window.mozgGotowy?.();
       })();
     } else {
       start(new Set(REGIONS)); // no 3D, but the timeline still follows the text
+      window.mozgGotowy?.();
     }
   </script>
 </body>
