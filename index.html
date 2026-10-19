@@ -825,13 +825,122 @@
     }
     .pull cite { display: block; margin-top: 12px; font: 300 15px/1.3 var(--sans); font-style: normal; letter-spacing: 0; color: var(--muted); }
 
-    /* Frame for a video player, filled in later */
+    /* Video: a 16:9 frame with the poster and a yellow play button. The poster
+       comes after the title screen, and the film itself is downloaded only when
+       the reader presses play. */
     .video {
+      position: relative;
       margin: 36px 0;
       aspect-ratio: 16 / 9;
+      overflow: hidden;
       border-radius: 20px;
       background: #000;
     }
+    .video video { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .video__play {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+    .video__play::before {
+      content: "";
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: var(--onet) no-repeat 54% 50% / 26px
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23171717' d='M6 3.8v16.4a1 1 0 0 0 1.5.9l13.1-8.2a1 1 0 0 0 0-1.8L7.5 2.9A1 1 0 0 0 6 3.8z'/%3E%3C/svg%3E");
+      transition: transform 150ms ease;
+    }
+    .video__play:hover::before { transform: scale(1.06); }
+    .video__play:active::before { transform: scale(0.985); }
+    .video__play:focus-visible { outline: 2px solid var(--onet); outline-offset: -6px; }
+    /* Title in the top left corner over the poster, on a soft shade; gone once it plays */
+    .video__title {
+      position: absolute;
+      inset: 0 0 auto;
+      padding: 18px 22px 40px;
+      background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+      color: #fff;
+      font: 700 clamp(15px, 1.4vw, 18px)/1.3 var(--sans);
+      text-wrap: balance;
+      pointer-events: none;
+      transition: opacity 250ms ease;
+    }
+    .video.is-playing .video__play { display: none; }
+    /* While it plays the title hides, and comes back with the controls: on hover,
+       for a few seconds after a tap on phones, and whenever it is paused. */
+    .video.is-playing .video__title { opacity: 0; }
+    .video.is-playing.is-paused .video__title,
+    .video.is-playing.show-title .video__title { opacity: 1; }
+    @media (hover: hover) { .video.is-playing:hover .video__title { opacity: 1; } }
+
+    /* Mini player: a yellow pill in the bottom right corner while a film plays off
+       screen; play/pause, and the title takes you back to the film. */
+    .mini-player {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: min(420px, calc(100% - 32px));
+      padding: 4px 18px 4px 4px;
+      border-radius: 999px;
+      background: var(--onet);
+      box-shadow: 0 10px 30px rgba(23, 23, 23, 0.22);
+      font-family: var(--sans);
+      animation: mini-in 300ms ease;
+    }
+    .mini-player[hidden] { display: none; }
+    @keyframes mini-in { from { opacity: 0; translate: 0 12px; } }
+    /* Play/pause: an ink disc inside a ring that fills as the film plays */
+    .mini-player__toggle {
+      position: relative;
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+    }
+    .mini-player__toggle::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--ink); }
+    .mini-player__toggle svg:not(.mini-player__ring) { position: relative; width: 18px; height: 18px; fill: var(--onet); }
+    .mini-player__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); fill: none; stroke-width: 3; }
+    .mini-player__track { stroke: rgba(23, 23, 23, 0.18); }
+    .mini-player__bar { stroke: var(--ink); stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--progress, 0) * 100); stroke-linecap: round; }
+    .mini-player__play { display: none; }
+    .mini-player.is-paused .mini-player__play { display: block; }
+    .mini-player.is-paused .mini-player__pause { display: none; }
+    .mini-player__title {
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--ink);
+      font: 700 14px/1.25 var(--sans);
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .mini-player :is(button):active { transform: scale(0.985); }
+    .mini-player :is(button):focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { .mini-player { animation: none; } }
+    /* Phones: the parent page's bottom navigation bar covers the iframe's bottom
+       44 px and is not counted in its available height, so sit above it. */
+    @media (max-width: 760px), (hover: none) { .mini-player { bottom: calc(16px + 44px); } }
 
     /* Infographic: a white card of foods, each on a tilted sticker as in the test */
     .info {
@@ -1269,7 +1378,11 @@
       <p>Dr Kieszkowska-Grudny podkreśla, że nie istnieją magiczne rozwiązania. — Oczywiście są strategie, które pomagają tu i teraz. <strong>Najprostszą z nich jest oddech.</strong> Regularne zatrzymanie się na kilka spokojnych oddechów naprawdę ma znaczenie. Ale głębsza praca dotyczy naszych przekonań, nawyków i codziennych rytuałów. Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy. Dlatego tak ważne są regularny sen, higiena rytmu dobowego czy praktyki uważności. I oczywiście rozpoznanie, jakie znaczenie nadajemy określonym sytuacjom.</p>
       <blockquote class="pull">Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy.<cite>dr Anna Kieszkowska‑Grudny</cite></blockquote>
       <p>Odchodzę od ekranu, robię kilka ćwiczeń naprzemiennych (proste ćwiczenia fizyczne angażujące przeciwne strony ciała), wyglądam przez okno. Przez ok. pięć minut patrzę na spadające z drzewa liście. Jest lepiej, rzeczywiście. Ale muszę wrócić do komputera.</p>
-      <div class="video" data-src="https://kobieta.onet.pl/wiadomosci/stresujacy-dzien-to-cwiczenie-moze-pomoc-ci-sie-wyciszyc/807s2t1"></div>
+      <figure class="video" data-mp4="https://media.onet.pl/_ms/8ce6b3a4-9376-492b-9668-91a11ce51fbb.1792068916023.2000.mp4">
+        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-stres.webp?v=20261019-0700" aria-label="Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie"></video>
+        <button class="video__play" type="button" aria-label="Odtwórz wideo: Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie"></button>
+        <figcaption class="video__title">Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie</figcaption>
+      </figure>
       <div class="clock" style="--sky: #a8d5f2">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
           <g transform="rotate(-8.5)">
@@ -1319,7 +1432,11 @@
       <p>Dr Kieszkowska-Grudny wspomina, że już po kilkudziesięciu sekundach jej rozmówczyni zaczęła rozglądać się po sali i powoli wycofywać się z rozmowy. Na odchodne powiedziała tylko: „Myślałam, że da mi pani jakąś szybką radę”.</p>
       <p>— Myślę, że ta anegdota dobrze pokazuje nasze podejście do zdrowia psychicznego. Latami nie zauważamy lub ignorujemy sygnały, które wysyła przemęczony lub potrzebujący mózg i zestresowane ciało. Kiedy cierpienie narasta, chcemy magicznej różdżki. Owszem, istnieją rozwiązania, które pomagają doraźnie. Ale <strong>jeśli chcemy naprawdę zadbać o mózg, musimy myśleć długofalowo</strong>, bo dzięki temu nasz mózg będzie w fantastycznej kondycji przez naprawdę długie lata.</p>
       <p>Nadchodzi 15:30, czas pracy się kończy. Składam laptopa — wiem, że dla mojego mózgu będzie najlepiej, jeśli ograniczę ekrany na dziś. Muszę położyć się na 15 minut, znów zakrywam oczy, by odciąć się od dodatkowych bodźców. Zjadam resztę pomidorów i sałatki z rukoli, biorę szybki prysznic i jadę na basen.</p>
-      <div class="video" data-src="https://kobieta.onet.pl/wiadomosci/jak-poprawic-zdrowie-mozgu-polaczylismy-tdcs-z-kilkoma-cwiczeniami/qnh2dcg"></div>
+      <figure class="video" data-mp4="https://media.onet.pl/_ms/f436cd2c-2fef-4b0a-a919-cccacfffe56e.1791979835536.4000.mp4">
+        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-tdcs.webp?v=20261019-0700" aria-label="Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS"></video>
+        <button class="video__play" type="button" aria-label="Odtwórz wideo: Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS"></button>
+        <figcaption class="video__title">Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS</figcaption>
+      </figure>
       <div class="clock" style="--sky: #a8d5f2">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
           <g transform="rotate(-8.5)">
@@ -1437,6 +1554,16 @@
         </svg>
     </div>
   </footer>
+
+  <!-- Mini player: while a film plays off screen, a yellow pill in the corner -->
+  <div class="mini-player" id="miniPlayer" hidden>
+    <button class="mini-player__toggle" type="button" aria-label="Pauza">
+      <svg class="mini-player__ring" viewBox="0 0 52 52" aria-hidden="true"><circle class="mini-player__track" cx="26" cy="26" r="24"></circle><circle class="mini-player__bar" cx="26" cy="26" r="24" pathLength="100"></circle></svg>
+      <svg class="mini-player__pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"></rect><rect x="14" y="5" width="4" height="14" rx="1.2"></rect></svg>
+      <svg class="mini-player__play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.8v14.4a1 1 0 0 0 1.5.9l11.5-7.2a1 1 0 0 0 0-1.8L8.5 3.9A1 1 0 0 0 7 4.8z"></path></svg>
+    </button>
+    <button class="mini-player__title" type="button"></button>
+  </div>
 
   <script>
   (function () {
@@ -1592,6 +1719,94 @@
         img.removeAttribute('data-src');
       });
     });
+  </script>
+
+  <script>
+  (function () {
+    // Videos: nothing is fetched until play. The poster comes after the title
+    // screen (s1Gotowe); on play the MP4 is attached, and the browser streams it
+    // in pieces (range requests), a few dozen seconds ahead, never the whole file.
+    var frames = Array.prototype.slice.call(document.querySelectorAll('.video'));
+    if (!frames.length) return;
+
+    var mini = document.getElementById('miniPlayer');
+    var miniToggle = mini.querySelector('.mini-player__toggle');
+    var miniTitle = mini.querySelector('.mini-player__title');
+    var current = null; // the film last started
+    function updateMini() {
+      var show = current && !current.miniVisible;
+      mini.hidden = !show;
+      if (!show) return;
+      var video = current.querySelector('video');
+      mini.classList.toggle('is-paused', video.paused);
+      miniToggle.setAttribute('aria-label', video.paused ? 'Odtwórz' : 'Pauza');
+      // Only the first sentence of the title, up to its question mark or full stop.
+      var title = current.querySelector('.video__title').textContent;
+      miniTitle.textContent = (title.match(/^.*?[?.!](?=\s|$)/) || [title])[0];
+      showProgress(video);
+    }
+    function showProgress(video) {
+      var progress = video.duration ? video.currentTime / video.duration : 0;
+      mini.style.setProperty('--progress', progress.toFixed(4));
+    }
+    miniToggle.addEventListener('click', function () {
+      if (!current) return;
+      var video = current.querySelector('video');
+      if (video.paused) video.play(); else video.pause();
+    });
+    miniTitle.addEventListener('click', function () {
+      if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    window.s1Gotowe.then(function () {
+      frames.forEach(function (frame) {
+        var video = frame.querySelector('video');
+        if (video.dataset.poster) video.poster = video.dataset.poster;
+      });
+    });
+
+    frames.forEach(function (frame) {
+      var video = frame.querySelector('video');
+      var button = frame.querySelector('.video__play');
+      button.addEventListener('click', function () {
+        frame.classList.add('is-playing');
+        video.controls = true;
+        if (!video.getAttribute('src')) video.src = frame.dataset.mp4;
+        var started = video.play();
+        if (started && started.catch) started.catch(function () {}); // the controls are there to retry
+      });
+      // No "Save video as" in the right-click menu (controlslist="nodownload" hides the menu item).
+      video.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+      // The title comes back with the controls: while paused, and for 3 s after a tap.
+      var hideTimer = 0;
+      video.addEventListener('pause', function () { frame.classList.add('is-paused'); });
+      video.addEventListener('playing', function () { frame.classList.remove('is-paused'); });
+      frame.addEventListener('touchstart', function () {
+        frame.classList.add('show-title');
+        window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(function () { frame.classList.remove('show-title'); }, 3000);
+      }, { passive: true });
+      // Mini player: shown while this film has been started and is off screen.
+      frame.miniVisible = true;
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+          frame.miniVisible = entries[entries.length - 1].intersectionRatio >= 0.25;
+          updateMini();
+        }, { threshold: [0, 0.25] }).observe(frame);
+      }
+      video.addEventListener('play', function () { current = frame; updateMini(); });
+      video.addEventListener('pause', updateMini);
+      video.addEventListener('timeupdate', function () { if (current === frame && !mini.hidden) showProgress(video); });
+      video.addEventListener('ended', function () { if (current === frame) current = null; updateMini(); });
+      // Only one video plays at a time.
+      video.addEventListener('play', function () {
+        frames.forEach(function (other) {
+          var v = other.querySelector('video');
+          if (v !== video && !v.paused) v.pause();
+        });
+      });
+    });
+  })();
   </script>
 
   <script>
