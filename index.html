@@ -380,10 +380,9 @@
 
     .quiz__card {
       width: min(980px, 100%);
-      min-height: min(760px, calc(var(--screen) - var(--banner-now) - 32px));
       display: grid;
       place-items: center;
-      padding: 32px;
+      padding: 24px;
       border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 28px;
       background: rgba(255, 255, 255, 0.55);
@@ -392,6 +391,14 @@
       box-shadow: var(--quiz-shadow);
       color: var(--s1-ink);
       pointer-events: auto; /* the steps around it let clicks through */
+    }
+
+    /* The test: full width of the card, 600 px tall (550 px on phones), the
+       optimum given by the test; it scrolls inside its own frame. */
+    .quiz__frame { display: block; width: 100%; height: 600px; border: 0; }
+    @media (max-width: 640px) {
+      .quiz__card { padding: 12px; border-radius: 20px; }
+      .quiz__frame { height: 550px; }
     }
 
     /* Content partner at the bottom of the title screen, in the text colour */
@@ -645,10 +652,12 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      transition: opacity 900ms ease;
     }
 
-    .sticky-visual.is-ready canvas { opacity: 1; }
+    /* Fades in once built; --brain-o (set by the script) dims it behind the
+       introduction and the test, so their text and the card read clearly. */
+    .sticky-visual.is-ready canvas { opacity: var(--brain-o, 1); animation: brain-in 900ms ease; }
+    @keyframes brain-in { from { opacity: 0; } }
 
     .loader {
       position: absolute;
@@ -729,14 +738,6 @@
 
     .step-text p { margin: 0; }
     .step-text p + p { margin-top: 0.8em; }
-    /* How to read the graphic, under the last step: on a white card */
-    .step-text .step-note {
-      margin-top: 1.2em;
-      padding: 18px 22px;
-      border-radius: 18px;
-      background: #fff;
-      text-shadow: none;
-    }
 
     /* Structure names in the text, in the colour they have on the model */
     .step-text mark {
@@ -1059,14 +1060,17 @@
 
     /* Line breaking, as in the style spec: headings, leads, step texts, captions and
        the footer break into even lines; running text only avoids a lone last word. */
-    .dek, .wstep__card, .step-text, .clock__label, .info__title, .info__item,
+    .dek, .wstep__card, .clock__label, .info__title, .info__item,
     .info__avoid h4, .info__source, .author__name, .partner__label, .footer-block,
     .article__title, .article__lead, .pull { text-wrap: balance; }
     .article p:not(.article__lead), .bio p { text-wrap: pretty; }
+    /* Brain steps run to 7+ lines, where browsers skip text-wrap: balance, so a
+       script balances them (see "Balanced paragraphs"); pretty until it runs. */
+    .step-text { text-wrap: pretty; }
 
     @media (prefers-reduced-motion: reduce) {
       .scroll-hint__icon, .scroll-hint__icon i, .scroll-hint__icon::before, .scroll-hint__icon::after { animation: none !important; }
-      .sticky-visual canvas { transition: none; }
+      .sticky-visual canvas { animation: none !important; }
       .scroll-progress { transition: none; }
       .title-bg::after { animation: none; }
       .js-s1 .intro > *, .js-s1 .title-logo__text, .js-s1 .title-logo__gauge { translate: none; transform: none; transition-duration: 1ms; transition-delay: 0s; }
@@ -1231,14 +1235,18 @@
         <!-- Test: on the title background, the brain spinning behind the card. -->
         <section class="quiz" id="quiz" aria-label="Test">
           <div class="quiz__pin">
-            <div class="quiz__card"></div>
+            <div class="quiz__card">
+              <!-- The test, a separate Ring Pages page; ?tryb=matka is required (no own title, no height talk with Onet). Loaded after the title screen. -->
+              <iframe class="quiz__frame" data-src="https://pg855gqneg0t.ring-pages.io/?tryb=matka" title="Test Mózg na pełnych obrotach"></iframe>
+            </div>
           </div>
         </section>
 
         <section class="step" data-time="06:00" data-yaw="15" data-pitch="14">
           <div class="step-text">
             <p>Mózg nie pracuje przez całą dobę tak samo. Różne jego obszary osiągają szczyt aktywności o różnych porach dnia i nocy.</p>
-            <p>Zegar u góry pokazuje porę doby, a kolorem na modelu wyróżniamy obszary, o których właśnie czytasz.</p>
+            <p>Zobacz, czego możesz się spodziewać od swojego mózgu o godzinie, którą wskazuje zamieszczony na górze strony zegar.</p>
+            <p>Do grafiki wybraliśmy obszary mózgu, które są warte podkreślenia o danej porze dnia. Nie oznacza to, że inne obszary nie są w tym czasie aktywne. Godziny dotyczą osób o pośrednim chronotypie. U „skowronków” procesy te zachodzą wcześniej, u „sów” później.</p>
           </div>
         </section>
 
@@ -1257,7 +1265,7 @@
         <section class="step" data-time="12:45" data-highlight="accumbens" data-yaw="-80" data-pitch="4" data-zoom="1.12">
           <div class="step-text">
             <p>Układ nagrody, do którego należy <mark data-token="accumbens">jądro półleżące</mark>, to zbiór struktur mózgowych odpowiedzialnych za motywację, uczenie się zachowań ukierunkowanych na cel oraz odczuwanie przyjemności. On również ma rytm dobowy.</p>
-            <p>Deklarowane samopoczucie pozytywne (dobry nastrój, energia) zwykle osiąga szczyt po południu. Paradoksalnie jednak w badaniu z użyciem rezonansu magnetycznego na 16 młodych mężczyznach mózg reagował na nagrodę najsłabiej około 14:00, a silniej rano i wieczorem. Badacze tłumaczą, że mózg mocniej reaguje na przyjemności, których się nie spodziewa.</p>
+            <p>Deklarowane samopoczucie pozytywne (dobry nastrój, energia) zwykle osiąga szczyt po południu. Warto jednak wspomnieć badanie z użyciem rezonansu magnetycznego na 16 młodych mężczyznach. Ich mózg reagował na nagrodę najsłabiej około 14:00, a silniej rano i wieczorem. Badacze tłumaczą, że mózg mocniej reaguje na przyjemności, których się nie spodziewa.</p>
           </div>
         </section>
 
@@ -1270,7 +1278,7 @@
         <section class="step" data-time="17:00" data-highlight="motor" data-yaw="-135" data-pitch="40" data-zoom="1.04">
           <div class="step-text">
             <p><mark data-token="motor">Kora ruchowa</mark> odpowiada za planowanie, kontrolę oraz realizację świadomych ruchów mięśni szkieletowych. U wielu osób późne popołudnie to pora najkrótszego czasu reakcji i najlepszej koordynacji.</p>
-            <p>U poddanych badaniu sportowców szczyt formy zależał jednak bardziej od tego, ile godzin minęło od przebudzenia, niż od godziny na zegarze, a różnice w ciągu dnia sięgały 26 proc.</p>
+            <p>Warto podkreślić, że znaczenie w określeniu momentu najlepszej formy ma przede wszystkim czas, jaki minął od przebudzenia, nie sama godzina na zegarze.</p>
           </div>
         </section>
 
@@ -1290,7 +1298,7 @@
 
         <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:0.35" data-yaw="-225" data-pitch="8" data-zoom="1.08">
           <div class="step-text">
-            <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w <mark data-token="neocortex">korze nowej</mark>. To tzw. konsolidacja pamięci.</p>
+            <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w korze nowej. To tzw. konsolidacja pamięci.</p>
           </div>
         </section>
 
@@ -1309,7 +1317,6 @@
         <section class="step" data-time="06:00" data-highlight="scn hypothalamus" data-yaw="-408" data-pitch="-8" data-zoom="1.25">
           <div class="step-text">
             <p>O świcie światło znów dociera do siatkówki, <mark data-token="scn">jądro nadskrzyżowaniowe</mark> hamuje wydzielanie melatoniny i zaczyna się kolejna doba.</p>
-            <p class="step-note">Do grafiki wybraliśmy obszary mózgu, które są warte podkreślenia o danej porze dnia. Nie oznacza to, że inne obszary nie są w tym czasie aktywne. Godziny dotyczą osób o pośrednim chronotypie. U „skowronków” procesy te zachodzą wcześniej, u „sów” później.</p>
           </div>
         </section>
       </div>
@@ -1317,12 +1324,12 @@
 
     <article class="article">
       <h2 class="article__title"><span class="article__sticker">24</span> godziny z życia mózgu</h2>
-      <p class="article__lead">Co dokładnie dzieje się w Twojej głowie o 7:00, 10:00, 14:00 i 21:00? Poznaj naukowo opracowany przewodnik po 24 godzinach pracy mózgu. Osobiście przetestowała go dziennikarka Joanna Barańska.</p>
+      <p class="article__lead">Wiesz już, które części mózgu mają największy wpływ na Twoje funkcjonowanie o danej porze dnia. A jak to wykorzystać na swoją korzyść? Jakie zachowania i jaka dieta mogą nam pomóc, a jakie zaszkodzić? Poznaj naukowo opracowany przewodnik po 24 godzinach pracy Twojego mózgu. Osobiście przetestowała go dziennikarka Joanna Barańska.</p>
       <div class="author">
         <img class="author__photo" data-src="assets/joanna-baranska.jpg?v=20261018-1455" alt="" width="360" height="360" loading="lazy" decoding="async">
         <p class="author__name">Joanna Barańska</p>
       </div>
-      <p>Mózg to jeden z organów, który zużywa w ciągu dnia najwięcej naszej energii. „Steruje” wszystkim, co robimy — choć często wolelibyśmy, żeby było odwrotnie. Zachowaniem i przyzwyczajeniami chcemy zmusić mózg do tego, żeby wycisnął z siebie wszystko. Maksymalna aktywność całą dobę, zero zmęczenia, sygnały o potrzebach zepchnięte na nieokreśloną przyszłość. <strong>A wystarczy wiedzieć, jak dobrze go traktować, by nam się odwdzięczył.</strong></p>
+      <p>Mózg to jeden z organów, który zużywa w ciągu dnia najwięcej naszej energii. “Steruje” wszystkim, co robimy — choć często wolelibyśmy, żeby było odwrotnie. Zachowaniem i przyzwyczajeniami chcemy zmusić mózg do tego, żeby wycisnął z siebie wszystko. Maksymalna aktywność całą dobę, zero zmęczenia, sygnały o potrzebach zepchnięte na nieokreśloną przyszłość. <strong>A wystarczy wiedzieć, jak dobrze go traktować, by nam się odwdzięczył.</strong></p>
       <p>Artykuły naukowe i eksperci, z którymi rozmawiam, mówią, żeby zacząć od obserwacji. Czy zaraz po wstaniu czujesz się wypoczęta? Kiedy czujesz zmęczenie? O której godzinie wzrasta kreatywność? Wybieram obiekt badawczy, do którego mam stale dostęp — siebie.</p>
       <p>Postanawiam obserwować swoje odczucia w dniu roboczym, gdy mogę pracować z domu. W spokojniejszym otoczeniu łatwiej będzie mi zorientować się, gdy moja wydajność spadnie (zazwyczaj jest i tak dużo niższa w hałaśliwym biurowym open space).</p>
       <div class="clock" style="--sky: #f3a76b">
@@ -1367,7 +1374,7 @@
         <h2 class="clock__label"><span class="clock__time">10:00</span> Przedpołudnie</h2>
       </div>
       <p>Trzon mojej pracy polega na dokładnym czytaniu i redagowaniu podsyłanych mi tekstów. Mają ok. 20 tys. znaków, ze spacjami. Również tłumaczę, rzadziej piszę własne artykuły. Sprawdzam dwa komunikatory oraz pocztę. Uczestniczę w spotkaniach; pierwsze z nich odbywa się o poranku. Ok. godz. 10 mój mózg domaga się przerwy. Odczuwam pierwsze zmęczenie.</p>
-      <p>Jak wskazuje w swoim artykule „Digital multitasking and hyperactivity: unveiling the hidden costs to brain health” („Cyfrowy multitasking i nadmierne pobudzenie: ukryte koszty dla zdrowia mózgu”, dostępny w czasopiśmie naukowym „Annals of Medicine and Surgery”) biochemik i biolog molekularny M.K. Hasan wykonywanie kilku czynności cyfrowych jednocześnie lub bardzo szybkie przełączanie się między nimi, sprawia, że mózg nie wykonuje wielu zadań równocześnie, a bardzo szybko przełącza uwagę między nimi. Wymaga to od niego dodatkowych zasobów poznawczych — za co płaci określoną cenę. Mózg doświadcza wówczas obciążenia poznawczego, a więc zwiększa wysiłek, jaki musi wykonać pamięć robocza. Konsekwencje? Spada koncentracja, szybciej się rozpraszamy, gorzej podejmujemy decyzje, szybciej męczymy się psychicznie. Biochemik przywołuje badania, które sugerują, że koszty częstego przełączania się między zadaniami <strong>mogą pochłaniać nawet do 40 proc. produktywnego czasu pracy</strong>.</p>
+      <p>Jak wskazuje w swoim artykule “Digital multitasking and hyperactivity: unveiling the hidden costs to brain health” (“Cyfrowy multitasking i nadmierne pobudzenie: ukryte koszty dla zdrowia mózgu”, dostępny w czasopiśmie naukowym “Annals of Medicine and Surgery”) biochemik i biolog molekularny M.K. Hasan wykonywanie kilku czynności cyfrowych jednocześnie lub bardzo szybkie przełączanie się między nimi, sprawia, że mózg nie wykonuje wielu zadań równocześnie, a bardzo szybko przełącza uwagę między nimi. Wymaga to od niego dodatkowych zasobów poznawczych — za co płaci określoną cenę. Mózg doświadcza wówczas obciążenia poznawczego, a więc zwiększa wysiłek, jaki musi wykonać pamięć robocza. Konsekwencje? Spada koncentracja, szybciej się rozpraszamy, gorzej podejmujemy decyzje, szybciej męczymy się psychicznie. Biochemik przywołuje badania, które sugerują, że koszty częstego przełączania się między zadaniami <strong>mogą pochłaniać nawet do 40 proc. produktywnego czasu pracy</strong>.</p>
       <blockquote class="pull">Wykonywanie kilku czynności cyfrowych jednocześnie lub bardzo szybkie przełączanie się między nimi sprawia, że mózg nie wykonuje wielu zadań równocześnie, a bardzo szybko przełącza uwagę między nimi.</blockquote>
       <p>To nie wszystko. Osoby, które każdego dnia angażują się w cyfrowy multitasking, częściej doświadczają przewlekłego lęku i stresu; opisują też symptomy wskazujące na nasilające się epizody depresyjne. Jak zauważa autor, może to wynikać z przeciążenia poznawczego i nieustannego, ciągłego pobudzania układu nerwowego.</p>
       <p>Hasan opisuje, że badania z wykorzystaniem rezonansu magnetycznego (fMRI) i elektroencefalografii (EEG) dają podstawy do stwierdzenia, że podczas intensywnego multitaskingu spada jakość pracy obszarów odpowiadających za kontrolę poznawczą, a silniej aktywowane są regiony związane z pobudzeniem i reakcją na stres. Ogółem: wzrasta obciążenie mózgu.</p>
@@ -1378,10 +1385,10 @@
       <p>Dr Kieszkowska-Grudny podkreśla, że nie istnieją magiczne rozwiązania. — Oczywiście są strategie, które pomagają tu i teraz. <strong>Najprostszą z nich jest oddech.</strong> Regularne zatrzymanie się na kilka spokojnych oddechów naprawdę ma znaczenie. Ale głębsza praca dotyczy naszych przekonań, nawyków i codziennych rytuałów. Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy. Dlatego tak ważne są regularny sen, higiena rytmu dobowego czy praktyki uważności. I oczywiście rozpoznanie, jakie znaczenie nadajemy określonym sytuacjom.</p>
       <blockquote class="pull">Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy.<cite>dr Anna Kieszkowska‑Grudny</cite></blockquote>
       <p>Odchodzę od ekranu, robię kilka ćwiczeń naprzemiennych (proste ćwiczenia fizyczne angażujące przeciwne strony ciała), wyglądam przez okno. Przez ok. pięć minut patrzę na spadające z drzewa liście. Jest lepiej, rzeczywiście. Ale muszę wrócić do komputera.</p>
-      <figure class="video" data-mp4="https://media.onet.pl/_ms/8ce6b3a4-9376-492b-9668-91a11ce51fbb.1792068916023.2000.mp4">
-        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-stres.webp?v=20261019-0700" aria-label="Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie"></video>
-        <button class="video__play" type="button" aria-label="Odtwórz wideo: Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie"></button>
-        <figcaption class="video__title">Co dzieje się z mózgiem, gdy się stresujemy? Sprawdziłam to na sobie</figcaption>
+      <figure class="video" data-mp4="https://media.onet.pl/_ms/8ce6b3a4-9376-492b-9668-91a11ce51fbb.1792572421178.2000.mp4">
+        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-stres.webp?v=20261021-1615" aria-label="Zobacz, co dzieje się z mózgiem, gdy się stresujemy"></video>
+        <button class="video__play" type="button" aria-label="Odtwórz wideo: Zobacz, co dzieje się z mózgiem, gdy się stresujemy"></button>
+        <figcaption class="video__title">Zobacz, co dzieje się z mózgiem, gdy się stresujemy</figcaption>
       </figure>
       <div class="clock" style="--sky: #a8d5f2">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
@@ -1396,8 +1403,8 @@
       </div>
       <p>Pomiędzy godz. 12 a 13 dopada mnie kolejna fala zmęczenia. Ta jest zdecydowanie silniejsza. Czuję, że moje możliwości poznawcze spadają. Obserwuję, że w tym czasie łatwiej o błąd, przeoczenie, nieprawidłową interpretację polecenia. Muszę się maksymalnie skoncentrować. W domu to zdecydowanie łatwiejsze. W biurze musiałabym szukać pustej sali, w której nie słyszałabym innych współpracowników czy dźwięków miasta (przez otwarte okno słychać przejeżdżające nieopodal pociągi).</p>
       <p>W sukurs przychodzi dr Kieszkowska-Grudny. — Gdy w połowie pracy albo dyżuru dopada nas znużenie, <strong>najskuteczniejsza jest krótka, maksymalnie 10-20-minutowa drzemka</strong> — oczywiście jeśli tylko to możliwe. Już kilkanaście minut snu poprawia czujność na mniej więcej dwie godziny. W biurze, gdzie drzemka nie wchodzi w grę, najlepiej wstać od biurka i przez kilka minut energicznie się poruszyć, na przykład wejść po schodach, najlepiej w dziennym świetle.</p>
-      <p>Neuropsycholożka tłumaczy, że pomagają też regularne krótkie przerwy i wprowadzenie zwyczaju sprawdzania telefonu w kilku blokach — maksymalnie trzech — w ciągu dnia zamiast reagowania na każde powiadomienie. <strong>Kawę lepiej wypić najpóźniej około dziewięciu godzin przed snem</strong> (czyli dla osób pracujących na poranną zmianę — około godz. 14, a dla tych na nocnej zmianie — najpóźniej około północy). Poza tym zdecydowanie warto zrezygnować z pokusy sięgnięcia po słodycze „na pobudzenie”, bo w pierwszej godzinie po ich zjedzeniu czujemy się raczej bardziej zmęczeni niż rześcy.</p>
-      <p>O tym ostatnim dowiaduję się już po tym, jak — po 10-minutowej przerwie, podczas której założyłam na oczy opaskę na sen, a do uszu włożyłam zatyczki, by odciąć bodźce i pozwolić mózgowi na swoisty „oddech” — zjadłam czekoladowy batonik (45 g).</p>
+      <p>Neuropsycholożka tłumaczy, że pomagają też regularne krótkie przerwy i wprowadzenie zwyczaju sprawdzania telefonu w kilku blokach — maksymalnie trzech — w ciągu dnia zamiast reagowania na każde powiadomienie. <strong>Kawę lepiej wypić najpóźniej około dziewięciu godzin przed snem</strong> (czyli dla osób pracujących na poranną zmianę — około godz. 14, a dla tych na nocnej zmianie — najpóźniej około północy). Poza tym zdecydowanie warto zrezygnować z pokusy sięgnięcia po słodycze “na pobudzenie”, bo w pierwszej godzinie po ich zjedzeniu czujemy się raczej bardziej zmęczeni niż rześcy.</p>
+      <p>O tym ostatnim dowiaduję się już po tym, jak — po 10-minutowej przerwie, podczas której założyłam na oczy opaskę na sen, a do uszu włożyłam zatyczki, by odciąć bodźce i pozwolić mózgowi na swoisty “oddech” — zjadłam czekoladowy batonik (45 g).</p>
       <figure class="info">
         <h3 class="info__title">Przekąski dla mózgu</h3>
         <ul class="info__grid">
@@ -1413,7 +1420,7 @@
         <figcaption class="info__source">Źródło: Northwestern Medicine</figcaption>
       </figure>
       <p>W czerwcu 2026 r. naukowcy z Monash University, australijskiej uczelni państwowej z główną siedzibą w Melbourne, opublikowali badanie, z którego wynika, że <strong>większe spożycie żywności ultraprzetworzonej wiąże się z gorszą koncentracją uwagi i wolniejszym przetwarzaniem informacji</strong>, nawet u osób, które poza tym odżywiają się zdrowo. Co więcej, częstsze spożycie takich produktów sprzyja występowaniu czynników ryzyka demencji.</p>
-      <p>Dobrze, krok po kroku. Batonik już zjadłam, tego nie cofnę, ale mam paczkę migdałów, które otworzę, gdy znowu zrobię się głodna. Na obiad będą duszone krewetki (dyskontowe promocje potrafią pozytywnie zaskoczyć!) — prof. J. Thomas Brenna, specjalista w dziedzinie żywienia człowieka, chemii i pediatrii, w artykule z 2025 r. „Hook, Line, and Thinker: Seafood Nets Benefits for Neurocognitive Development” (czyli „Na haczyk, żyłkę i rozum: owoce morza wspierają rozwój funkcji poznawczych mózgu”) wskazuje, że spożywanie ryb i owoców morza wiąże się z realnymi korzyściami dla rozwoju funkcji poznawczych.</p>
+      <p>Dobrze, krok po kroku. Batonik już zjadłam, tego nie cofnę, ale mam paczkę migdałów, które otworzę, gdy znowu zrobię się głodna. Na obiad będą duszone krewetki (dyskontowe promocje potrafią pozytywnie zaskoczyć!) — prof. J. Thomas Brenna, specjalista w dziedzinie żywienia człowieka, chemii i pediatrii, w artykule z 2025 r. “Hook, Line, and Thinker: Seafood Nets Benefits for Neurocognitive Development” (czyli “Na haczyk, żyłkę i rozum: owoce morza wspierają rozwój funkcji poznawczych mózgu”) wskazuje, że spożywanie ryb i owoców morza wiąże się z realnymi korzyściami dla rozwoju funkcji poznawczych.</p>
       <p>A dodatki? Pomidory w oliwie z oliwek (pomidory zawierają ok. 237-240 mg potasu na 100 g produktu, a oliwa z oliwek — jednonienasycone kwasy tłuszczowe i przeciwutleniacze, co pozwala wspierać funkcje poznawcze i chronić komórki nerwowe) oraz sałatka z rukoli (NM rekomenduje jarmuż, ale nienawidzę jego smaku; równocześnie podaje, że rukola należy do warzyw, których regularne spożywanie może pomagać spowalniać pogorszenie funkcji poznawczych) i ogórka.</p>
       <div class="clock" style="--sky: #a8d5f2">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
@@ -1426,16 +1433,16 @@
         </svg>
         <h2 class="clock__label"><span class="clock__time">14:00</span> Wczesne popołudnie</h2>
       </div>
-      <p>Jest godz. 14, mózg po krótkim „doładowaniu baterii”, jakim było odcięcie się od bodźców na kilka minut, znów zaczyna zwalniać. Piję drugą tego dnia kawę, ale mam wrażenie, że wciąż jestem zmęczona — tylko „szybciej”. Serce delikatnie przyspiesza, w skroni zaczynam czuć tępe pulsowanie zbliżającego się bólu, wynikającego z przeciążenia mózgu. Codziennie przetwarzam mnóstwo informacji, przeskakuję między ekranami, odpisuję na kilku komunikatorach. Jak ostatnio usłyszałam od terapeutki — mózg zaczyna zaciągać ręczny.</p>
+      <p>Jest godz. 14, mózg po krótkim “doładowaniu baterii”, jakim było odcięcie się od bodźców na kilka minut, znów zaczyna zwalniać. Piję drugą tego dnia kawę, ale mam wrażenie, że wciąż jestem zmęczona — tylko “szybciej”. Serce delikatnie przyspiesza, w skroni zaczynam czuć tępe pulsowanie zbliżającego się bólu, wynikającego z przeciążenia mózgu. Codziennie przetwarzam mnóstwo informacji, przeskakuję między ekranami, odpisuję na kilku komunikatorach. Jak ostatnio usłyszałam od terapeutki — mózg zaczyna zaciągać ręczny.</p>
       <p>Mówię dr Kieszkowskiej-Grudny, że w mojej opinii największym błędem współczesnego człowieka jest próba ciągłego stymulowania mózgu i zmuszania go do działania zamiast słuchania sygnałów, które wysyła. Ekspertka zgadza się z tym stwierdzeniem.</p>
       <p>— Bardzo często szukamy jednej szybkiej odpowiedzi — stwierdza. — Przypomina mi się pewna sytuacja z konferencji. Rozmawiałam ze znajomą, której nie widziałam od wielu lat. W pewnym momencie podeszła do nas inna uczestniczka i zapytała, czym się zajmuję. Znajoma opowiedziała o mojej pracy związanej ze zdrowiem psychicznym i stresem. Kobieta zainteresowała się tematem i poprosiła, żebym wyjaśniła, jak pracujemy z pacjentami. Zaczęłam opowiadać o kompleksowym podejściu, personalizacji terapii, koordynacji leczenia i innowacyjnych metodach pracy. Mówiłam może przez pół minuty.</p>
-      <p>Dr Kieszkowska-Grudny wspomina, że już po kilkudziesięciu sekundach jej rozmówczyni zaczęła rozglądać się po sali i powoli wycofywać się z rozmowy. Na odchodne powiedziała tylko: „Myślałam, że da mi pani jakąś szybką radę”.</p>
+      <p>Dr Kieszkowska-Grudny wspomina, że już po kilkudziesięciu sekundach jej rozmówczyni zaczęła rozglądać się po sali i powoli wycofywać się z rozmowy. Na odchodne powiedziała tylko: “Myślałam, że da mi pani jakąś szybką radę”.</p>
       <p>— Myślę, że ta anegdota dobrze pokazuje nasze podejście do zdrowia psychicznego. Latami nie zauważamy lub ignorujemy sygnały, które wysyła przemęczony lub potrzebujący mózg i zestresowane ciało. Kiedy cierpienie narasta, chcemy magicznej różdżki. Owszem, istnieją rozwiązania, które pomagają doraźnie. Ale <strong>jeśli chcemy naprawdę zadbać o mózg, musimy myśleć długofalowo</strong>, bo dzięki temu nasz mózg będzie w fantastycznej kondycji przez naprawdę długie lata.</p>
       <p>Nadchodzi 15:30, czas pracy się kończy. Składam laptopa — wiem, że dla mojego mózgu będzie najlepiej, jeśli ograniczę ekrany na dziś. Muszę położyć się na 15 minut, znów zakrywam oczy, by odciąć się od dodatkowych bodźców. Zjadam resztę pomidorów i sałatki z rukoli, biorę szybki prysznic i jadę na basen.</p>
-      <figure class="video" data-mp4="https://media.onet.pl/_ms/f436cd2c-2fef-4b0a-a919-cccacfffe56e.1791979835536.4000.mp4">
-        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-tdcs.webp?v=20261019-0700" aria-label="Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS"></video>
-        <button class="video__play" type="button" aria-label="Odtwórz wideo: Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS"></button>
-        <figcaption class="video__title">Jak zadbać o mózg i poprawić koncentrację? Pokazali nam metodę TDCS</figcaption>
+      <figure class="video" data-mp4="https://media.onet.pl/_ms/f436cd2c-2fef-4b0a-a919-cccacfffe56e.1792572274909.2000.mp4">
+        <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-tdcs.webp?v=20261021-1615" aria-label="Zobacz, jaka terapia wspiera mózg i jak poprawić koncentrację na co dzień"></video>
+        <button class="video__play" type="button" aria-label="Odtwórz wideo: Zobacz, jaka terapia wspiera mózg i jak poprawić koncentrację na co dzień"></button>
+        <figcaption class="video__title">Zobacz, jaka terapia wspiera mózg i jak poprawić koncentrację na co dzień</figcaption>
       </figure>
       <div class="clock" style="--sky: #a8d5f2">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
@@ -1448,7 +1455,7 @@
         </svg>
         <h2 class="clock__label"><span class="clock__time">16:00</span> Popołudnie</h2>
       </div>
-      <p>W artykule „Swimming‐related effects on cerebrovascular and cognitive function” („Wpływ pływania na krążenie mózgowe oraz funkcje poznawcze”) z 2019 r., który grupa nowozelandzkich i brytyjskich badaczy opublikowała w piśmie „Physiological Reports”, możemy przeczytać, że aktywność fizyczna w wodzie ma znaczny wpływ na funkcjonowanie mózgu. <strong>Już 20-minutowy trening pływacki o umiarkowanej intensywności zwiększa przepływ krwi przez mózg</strong> i poprawia wykonanie zadań wymagających szybkiej współpracy wzroku i ruchu. Naukowcy przypuszczają, że wynika to z połączenia kilku czynników: poziomego ułożenia ciała, zmian w oddychaniu oraz lepszego dotlenienia i ukrwienia tkanek nerwowych. Oznacza to, że w ciągu dnia możemy częściowo wpływać na sprawność poznawczą nie tylko poprzez sen i rytm dobowy, ale także poprzez odpowiednio dobraną aktywność fizyczną.</p>
+      <p>W artykule “Swimming‐related effects on cerebrovascular and cognitive function” (“Wpływ pływania na krążenie mózgowe oraz funkcje poznawcze”) z 2019 r., który grupa nowozelandzkich i brytyjskich badaczy opublikowała w piśmie “Physiological Reports”, możemy przeczytać, że aktywność fizyczna w wodzie ma znaczny wpływ na funkcjonowanie mózgu. <strong>Już 20-minutowy trening pływacki o umiarkowanej intensywności zwiększa przepływ krwi przez mózg</strong> i poprawia wykonanie zadań wymagających szybkiej współpracy wzroku i ruchu. Naukowcy przypuszczają, że wynika to z połączenia kilku czynników: poziomego ułożenia ciała, zmian w oddychaniu oraz lepszego dotlenienia i ukrwienia tkanek nerwowych. Oznacza to, że w ciągu dnia możemy częściowo wpływać na sprawność poznawczą nie tylko poprzez sen i rytm dobowy, ale także poprzez odpowiednio dobraną aktywność fizyczną.</p>
       <p>Badacze porównywali młodych pływaków i sportowców trenujących na lądzie. Analizowali przepływ krwi w tętnicy środkowej mózgu, a także wyniki testów poznawczych przeprowadzanych przed i po pływaniu. Dodajmy, że samo zanurzenie w wodzie nie wpływało znacząco na funkcje poznawcze — wszystko zmieniał dodany czynnik wysiłku. Już 20 minut pływania o umiarkowanej intensywności dało 4-procentową poprawę wyników w zadaniach wymagających koordynacji wzrokowo-ruchowej. Co istotne, badacze obserwowali ten efekt nie tylko u pływaków trenujących regularnie, ale i u osób specjalizujących się w innych dyscyplinach. Dlatego autorzy badania podkreślają, że badanie obrazuje krótkie, natychmiastowe zmiany zachodzące w mózgu — nie zaś wpływ regularnego pływania na funkcjonowanie naczyń mózgowych. Ale jest to kwestia warta dokładnego sprawdzenia, zwłaszcza w kontekście profilaktyki chorób neurodegeneracyjnych.</p>
       <div class="clock" style="--sky: #ef8a63">
         <svg class="clock__face" viewBox="-40 -40 80 80" aria-hidden="true">
@@ -1462,12 +1469,12 @@
         <h2 class="clock__label"><span class="clock__time">18:00</span> Wieczór</h2>
       </div>
       <p>Gdy wracam do domu, jest godz. 18. Piję kefir (białko po treningu!), jem trzy grzanki z pełnoziarnistego pieczywa, posmarowane masłem. Do diety powinnam wkomponować warzywa kapustne (brokuły, kalafior, brukselka) — jak podaje NM, są bogate w witaminy E, witaminy K, beta-karoten, foliany, a ich regularne spożywanie może spowalniać pogorszenie funkcji poznawczych.</p>
-      <p>Łamię wcześniejsze postanowienie i otwieram komputer. Spróbuję dokończyć pracę nad wywiadem, który muszę jutro wysłać do autoryzacji. Patrzę na litery, rozbiegają się na ekranie. Staram się zrozumieć, o czym czytam, ale jest coraz trudniej. Poddaję się — wolę wstać wcześniej rano, wieczorem mój mózg odmawia posłuszeństwa. To znaczy, że jestem „skowronkiem”, prawda?</p>
+      <p>Łamię wcześniejsze postanowienie i otwieram komputer. Spróbuję dokończyć pracę nad wywiadem, który muszę jutro wysłać do autoryzacji. Patrzę na litery, rozbiegają się na ekranie. Staram się zrozumieć, o czym czytam, ale jest coraz trudniej. Poddaję się — wolę wstać wcześniej rano, wieczorem mój mózg odmawia posłuszeństwa. To znaczy, że jestem “skowronkiem”, prawda?</p>
       <p>— Zwykle mówimy o skowronkach i sowach, ale tak naprawdę jest to pewne uproszczenie — wyjaśnia dr Kieszkowska-Grudny. — <strong>Nie istnieją dwie osobne grupy ludzi</strong>; powiedziałabym raczej to krańce ciągłego rozkładu, a nie dwie odrębne grupy chronotypów. Chronotyp [biologiczna preferencja organizmu dotycząca pory snu, czuwania oraz największej aktywności w ciągu doby] jest cechą realną, mierzalną i w dużej mierze dziedziczną. Wiemy z badań, że mają tu znaczenie zarówno geny związane z funkcjonowaniem zegara biologicznego, jak i wrażliwość organizmu na światło.</p>
-      <p>Ekspertka tłumaczy: — U osób preferujących aktywność wieczorną cały biologiczny harmonogram jest przesunięty. Później w ciągu dnia pojawia się melatonina, później zmienia się temperatura ciała i później pojawia się naturalna gotowość do snu. Dodajmy, że relacja między melatoniną, kortyzolem i temperaturą ciała to jak naczynia połączone. Wskaźniki te działają na zasadzie stałej wymiany — jeżeli czegoś jest za dużo, to innego musi ubywać lub może go zablokować, np. zbyt wysoki poziom kortyzolu będzie „hamulcowym” dla melatoniny i stąd mogą się pojawiać zaburzenia snu w postaci trudności z zasypianiem.</p>
+      <p>Ekspertka tłumaczy: — U osób preferujących aktywność wieczorną cały biologiczny harmonogram jest przesunięty. Później w ciągu dnia pojawia się melatonina, później zmienia się temperatura ciała i później pojawia się naturalna gotowość do snu. Dodajmy, że relacja między melatoniną, kortyzolem i temperaturą ciała to jak naczynia połączone. Wskaźniki te działają na zasadzie stałej wymiany — jeżeli czegoś jest za dużo, to innego musi ubywać lub może go zablokować, np. zbyt wysoki poziom kortyzolu będzie “hamulcowym” dla melatoniny i stąd mogą się pojawiać zaburzenia snu w postaci trudności z zasypianiem.</p>
       <p>Z ciekawości dopytuję: czy chronotyp można przestawić?</p>
       <p>— Do pewnego stopnia tak. Są bardzo ciekawe badania pokazujące, że już tydzień funkcjonowania wyłącznie w naturalnym świetle, na przykład podczas biwaku pod namiotem, <strong>może przesunąć zegar biologiczny o około dwie godziny</strong> — zdradza neuropsycholożka. Regularne godziny snu, poranne światło i ograniczenie wieczornej ekspozycji na ekrany również przynoszą wyraźne efekty.</p>
-      <p>Przed ekranami przestrzega także prestiżowy Stanford University School of Medicine. W publikacji Sharon Brock „What Excessive Screen Time Does to the Adult Brain” („Co nadmiar czasu przed ekranem robi z mózgiem osoby dorosłej”) z 2024 r. na oficjalnym portalu uczelni czytamy o badaniach wskazujących na to, że długotrwała ekspozycja na ekrany może wiązać się z pogorszeniem pamięci i zdolności uczenia się, osłabieniem koncentracji, większym ryzykiem problemów ze zdrowiem psychicznym, a także zmianami w strukturze mózgu. Co szczególnie alarmujące, naukowcy zauważyli, że u nadmiernie korzystających z ekranów młodych dorosłych zaobserwowali proces neurodegeneracyjny, jakim jest ścieńczenie kory mózgowej (zmniejszenie objętości i grubości zewnętrznej warstwy mózgu, wynikające z utraty neuronów oraz połączeń między nimi). Ten obszar mózgu odpowiada m.in. za pamięć, podejmowanie decyzji, rozwiązywanie problemów. Brock powołuje się także na inne badania, które pokazują, że osoby oglądające telewizję przez pięć lub więcej godzin dziennie częściej zapadały na choroby neurologiczne, takie jak demencja, udar czy choroba Parkinsona.</p>
+      <p>Przed ekranami przestrzega także prestiżowy Stanford University School of Medicine. W publikacji Sharon Brock “What Excessive Screen Time Does to the Adult Brain” (“Co nadmiar czasu przed ekranem robi z mózgiem osoby dorosłej”) z 2024 r. na oficjalnym portalu uczelni czytamy o badaniach wskazujących na to, że długotrwała ekspozycja na ekrany może wiązać się z pogorszeniem pamięci i zdolności uczenia się, osłabieniem koncentracji, większym ryzykiem problemów ze zdrowiem psychicznym, a także zmianami w strukturze mózgu. Co szczególnie alarmujące, naukowcy zauważyli, że u nadmiernie korzystających z ekranów młodych dorosłych zaobserwowali proces neurodegeneracyjny, jakim jest ścieńczenie kory mózgowej (zmniejszenie objętości i grubości zewnętrznej warstwy mózgu, wynikające z utraty neuronów oraz połączeń między nimi). Ten obszar mózgu odpowiada m.in. za pamięć, podejmowanie decyzji, rozwiązywanie problemów. Brock powołuje się także na inne badania, które pokazują, że osoby oglądające telewizję przez pięć lub więcej godzin dziennie częściej zapadały na choroby neurologiczne, takie jak demencja, udar czy choroba Parkinsona.</p>
       <p>Dr Kieszkowska-Grudny dodaje: — W pracy klinicznej wykorzystujemy nierzadko terapię światłem. W moim ośrodku stosujemy akurat nie lampy, a specjalne okulary emitujące światło o fali określonej długości, dzięki czemu można stosunkowo szybko przesunąć rytm dobowy. To jednak nie usuwa genetycznych predyspozycji. Możemy wpływać na ich ekspresję, ale nie możemy całkowicie zmienić natury danego chronotypu. Zresztą tę technologię wykorzystujemy także u osób, które szybciej chcą pokonać jet lag lub doświadczają depresji sezonowej (czyli tzw. sezonowych zaburzeń afektywnych, SAD).</p>
       <p>Neuropsycholożka podkreśla, że <strong>osoba funkcjonująca późno nie jest z definicji leniwa</strong>, choć niektórzy uważają, że nie może lub nie chce się zabrać do pracy. Bardzo często po prostu żyje zgodnie ze swoim biologicznym zegarem.</p>
       <p>Na koniec dr Kieszkowska-Grudny wtrąca jeszcze jeden ciekawy aspekt: — Nie zapominajmy o wieku. Dzieci zazwyczaj funkcjonują jak skowronki, ale w okresie dojrzewania organizm przesuwa się w stronę wieczorności. Ten proces osiąga maksimum mniej więcej około 20. roku życia, a później stopniowo zaczyna się odwracać.</p>
@@ -1487,7 +1494,7 @@
       <p>— Bardzo dużo! — przestrzega dr Kieszkowska-Grudny. — Mózg stanowi ok. 2 proc. masy ciała, a odpowiada za ok. 20 proc. spoczynkowego zużycia tlenu. Jest organem, który zużywa całkiem spore ilości energii — a konkretnie, potrzebuje, nawet 100-120 g glukozy na dobę. Kiedy ograniczamy sen, zmienia się jego chemia.</p>
       <p>Badaczka używa dość szokującego porównania. — Wiemy między innymi, że <strong>po około 17 godzinach ciągłego czuwania nasza sprawność psychomotoryczna zaczyna przypominać tę obserwowaną po spożyciu około 0,5 promila alkoholu</strong>. Gorzej interpretujemy bodźce, wolniej reagujemy i popełniamy więcej błędów. Jako punkt odniesienia: w Polsce dopuszczalny limit alkoholu we krwi kierowcy wynosi 0,2 promila. Człowiek po nocy, podczas której spał mniej niż sześć godzin, czuje się tak, jakby znacznie przekroczył tę dawkę. Dodatkowo ciało migdałowate, struktura odpowiedzialna za reakcje emocjonalne, staje się znacznie bardziej aktywne. W praktyce oznacza to większą impulsywność i mniejszą odporność na stres.</p>
       <p>Kilka razy zdarzyło mi się obudzić ok. godz. 4 czy 5 rano. Był to najczęściej stresujący czas. Nie mogłam wtedy zasnąć ponownie. Dr Kieszkowska-Grudny wyjaśnia, że to tzw. zakazana strefa snu, która trwa mniej więcej od godz. 3 do 6 rano.</p>
-      <p>— To mechanizm ochronny — opisuje ekspertka. — W tym czasie może być nam chwilowo trudniej zasnąć, bo organizm daje dodatkowy sygnał pobudzenia, który ma pomóc dotrwać do właściwej pory snu. Dzięki temu nie zasypiamy nagle kilka godzin przed nocnym odpoczynkiem. Dlatego, kiedy ktoś podróżuje przez różne strefy czasowe, radzi się mu: dotrwaj do czasu spoczynku, nie zasypiaj wcześniej. Chodzi o utrzymanie rytmu, a mniej o określenie godziny „lepszej na coś”. To wszystko po to, że ostatecznie <strong>dla naszej optymalnej sprawności w ciągu całego dnia liczy się długość i jakość snu</strong>. Natomiast dla długości i jakości snu, ważny jest rytm i rytuały w czasie czuwania.</p>
+      <p>— To mechanizm ochronny — opisuje ekspertka. — W tym czasie może być nam chwilowo trudniej zasnąć, bo organizm daje dodatkowy sygnał pobudzenia, który ma pomóc dotrwać do właściwej pory snu. Dzięki temu nie zasypiamy nagle kilka godzin przed nocnym odpoczynkiem. Dlatego, kiedy ktoś podróżuje przez różne strefy czasowe, radzi się mu: dotrwaj do czasu spoczynku, nie zasypiaj wcześniej. Chodzi o utrzymanie rytmu, a mniej o określenie godziny “lepszej na coś”. To wszystko po to, że ostatecznie <strong>dla naszej optymalnej sprawności w ciągu całego dnia liczy się długość i jakość snu</strong>. Natomiast dla długości i jakości snu, ważny jest rytm i rytuały w czasie czuwania.</p>
       <aside class="bio">
         <p>dr Anna Kieszkowska-Grudny — doktor nauk medycznych, psycholożka kliniczna, neuropsycholożka i certyfikowana psychoterapeutka PTTPB oraz EABCT, European EMDR Practitioner. Prezeska i współzałożycielka Minds of Hope | Instytutu BezStresu, liderka, coachka, mentorka i wykładowczyni.</p>
         <p>Inicjatorka i dyrektorka merytoryczna Akademii Liderów Przyszłości oraz pomysłodawczyni i dyrektorka programowa studiów podyplomowych Akademia Przywództwa Kobiet LiderShe.</p>
@@ -1525,6 +1532,7 @@
       </svg>
       <p class="footer-block footer-line"><strong>Skład i oprawa graficzna:</strong> Michał Rogalski</p>
       <p class="footer-block footer-line"><strong>Autorka projektu:</strong> Karolina Drogowska</p>
+      <p class="footer-block footer-line"><strong>Opieka redakcyjna:</strong> Marta Tabiś, Karolina Świdrak</p>
       <p class="footer-block footer-line"><strong>Autorka tekstu:</strong> Joanna Barańska</p>
       <p class="footer-block footer-line"><strong>Autorka treści wideo:</strong> Jaśmina Marczewska</p>
       <p class="footer-block footer-line"><strong>Podziękowania:</strong> Marcin Marczak</p>
@@ -1712,9 +1720,9 @@
   </script>
 
   <script>
-    // Photos further down load only after the title screen is complete.
+    // Photos and the test further down load only after the title screen is complete.
     window.s1Gotowe.then(function () {
-      document.querySelectorAll('img[data-src]').forEach(function (img) {
+      document.querySelectorAll('img[data-src], iframe[data-src]').forEach(function (img) {
         img.src = img.getAttribute('data-src');
         img.removeAttribute('data-src');
       });
@@ -1806,6 +1814,35 @@
         });
       });
     });
+  })();
+  </script>
+
+  <script>
+  (function () {
+    // Balanced paragraphs in the brain steps. Browsers balance only up to about
+    // six lines, so each paragraph is narrowed to the smallest width that keeps
+    // its number of lines: the lines come out even, with no lone last word.
+    var paragraphs = Array.prototype.slice.call(document.querySelectorAll('.step-text p'));
+    if (!paragraphs.length) return;
+    function balance(p) {
+      p.style.maxWidth = '';
+      p.style.textWrap = 'wrap';
+      var full = p.clientWidth;
+      var height = p.getBoundingClientRect().height;
+      var lo = full * 0.5, hi = full;
+      while (hi - lo > 2) {
+        var mid = (lo + hi) / 2;
+        p.style.maxWidth = mid + 'px';
+        if (p.getBoundingClientRect().height > height + 1) lo = mid; else hi = mid;
+      }
+      p.style.maxWidth = Math.ceil(hi) + 'px';
+    }
+    function balanceAll() { paragraphs.forEach(balance); }
+    var timer = 0;
+    function later() { window.clearTimeout(timer); timer = window.setTimeout(balanceAll, 150); }
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(balanceAll);
+    window.addEventListener('resize', later);
+    window.addEventListener('screen:resize', later);
   })();
   </script>
 
@@ -2950,8 +2987,11 @@
     // The title look lasts through the test screen, so the move starts from there:
     // from where the test's pinned card lets go (its last screen in the middle).
     const quiz = document.querySelector('.quiz');
+    const wstep = document.querySelector('.wstep');
+    let wstepTop = null; // page position of the introduction (s2)
     function measureSteps() {
       stepCenters = steps.map(pageCenter);
+      wstepTop = wstep ? wstep.getBoundingClientRect().top + window.scrollY : null;
       if (quiz) {
         introCenter = quiz.getBoundingClientRect().bottom + window.scrollY - window.innerHeight / 2;
       } else {
@@ -3149,6 +3189,8 @@
     const SPIN_SETTLE = 1.6;
     let titleSpin = 0;
     let spinBorn = 0; // when the brain was first drawn, in ms
+    const BRAIN_DIM = 0.8; // how much fainter the brain is behind s2 and s3 (0.8 leaves a fifth)
+    let shownBrainOpacity = 1;
 
     // How the brain looks on the title screen comes from the theme in CSS
     // (the --s1-* brain variables in :root). Re-read on 's1:theme'.
@@ -3212,6 +3254,14 @@
       // Wrap only while fully on the title screen, where a whole turn is invisible.
       if (landing === 0) titleSpin = wrapAngle(titleSpin);
       applyView(landing);
+      // Behind the introduction and the test (s2, s3) the brain is much fainter:
+      // it dims as s2 comes up and brightens again as it lands on the first step.
+      const dim = wstepTop === null ? 0 : smoothstep(wstepTop - window.innerHeight, wstepTop - window.innerHeight * 0.4, window.scrollY);
+      const brainOpacity = 1 - BRAIN_DIM * dim * (1 - landing);
+      if (Math.abs(brainOpacity - shownBrainOpacity) > 0.004) {
+        shownBrainOpacity = brainOpacity;
+        visual.style.setProperty('--brain-o', brainOpacity.toFixed(3));
+      }
       for (let r = 0; r < N; r++) change += approach(state.weights, r, target.weights[r], k);
       change += approach(parallax, 'x', pointer.x, k * 0.5);
       change += approach(parallax, 'y', pointer.y, k * 0.5);
