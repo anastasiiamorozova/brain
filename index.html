@@ -8,36 +8,29 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ffd200'/%3E%3C/svg%3E">
 
   <script>
-    // Title screen theme and scroll button from the URL: ?s1=ciemny or ?s1=stary, ?cta=pigulka
     var titleParams = new URLSearchParams(location.search);
     if (titleParams.get('s1')) document.documentElement.dataset.s1 = titleParams.get('s1');
     if (titleParams.get('cta')) document.documentElement.dataset.cta = titleParams.get('cta');
-  </script>
+</script>
 
   <script>
-    // Asset versions: bump ASSET_V whenever a model, texture or image changes.
     window.ASSET_V = '20261018-1455';
     window.wersja = function (u) { return u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + window.ASSET_V; };
 
-    // Loading order, as in the other special projects (lalka's tloGotowe):
-    // 1. the brain: its files are fetched first and it fades in on its own;
-    // 2. the title screen's content fades in once the brain is there (and the fonts);
-    // 3. everything else (photos further down, videos) waits for window.s1Gotowe.
     (function () {
       var root = document.documentElement;
       root.classList.add('js-s1');
       var brainDone;
       var brain = new Promise(function (resolve) { brainDone = resolve; });
       window.mozgGotowy = function () { brainDone(); };
-      window.setTimeout(brainDone, 8000); // no 3D or a slow network: show the title anyway
+      window.setTimeout(brainDone, 8000);
       function wait(ms) { return new Promise(function (resolve) { window.setTimeout(resolve, ms); }); }
       window.s1Widoczny = brain
-        .then(function () { return wait(450); }) // let the brain fade in first
+        .then(function () { return wait(450); })
         .then(function () { return Promise.race([document.fonts ? document.fonts.ready : null, wait(2000)]); })
         .then(function () { root.classList.add('s1-on'); });
-      window.s1Gotowe = window.s1Widoczny.then(function () { return wait(900); }); // after the title has faded in
+      window.s1Gotowe = window.s1Widoczny.then(function () { return wait(900); });
 
-      // Brain files first: the parts, the matcaps and the Draco decoder.
       var parts = ['1.1.1.3.0', '1.1.1.4.0', '1.1.1.5.1', '1.1.2.1.1', '1.1.2.0.0', '1.1.3.0.0', '1.1.4.0.0', '1.1.1.7.0', '1.1.1.8.0', '1.1.4.4.0', '1.1.1.1.1', '1.1.1.1.2', '2.1.0.0.0', '2.3.0.0.0', '2.1.1.0.0', '4.2.0.0.0', '4.3.0.0.0', '4.1.0.0.0', '1.1.3.1.0', '3.2.0.0.0', '3.2.4.0.0', '3.1.1.0.0', '1.1.10.0.0', '1.1.4.3.3', '1.1.4.3.2', '1.1.4.3.1', '1.1.6.5.0'];
       function preload(href, as, cors) {
         var link = document.createElement('link');
@@ -54,14 +47,14 @@
       preload('https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js', 'fetch', true);
       preload('https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/draco/gltf/draco_decoder.wasm', 'fetch', true);
     })();
-  </script>
+</script>
 
   <script>
     window.ompRingPages = window.ompRingPages || {};
     window.ompRingPages.cmd = window.ompRingPages.cmd || [];
     window.paywallEmbed = window.paywallEmbed || {};
     window.paywallEmbed.cmd = window.paywallEmbed.cmd || [];
-  </script>
+</script>
   <script src="https://cdn.wiadomosci.onet.pl/scripts/ring-pages-communication.js" defer></script>
   <script src="https://cdn.raspaid.pl/script/paywall.embed.boot.js" defer></script>
 
@@ -79,7 +72,7 @@
       }
     }
   </script>
-  <!-- after the import map: modules may only start loading once it is known -->
+
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js">
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js">
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/loaders/GLTFLoader.js">
@@ -96,13 +89,9 @@
       --line: rgba(23, 23, 23, 0.12);
       --shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
 
-      /* Highlight colours, kept muted like the Neurotorium atlas. The highlighted
-         words and the 3D model both read these. Structures shown in the same step
-         use clearly different hues: SCN and hypothalamus, hippocampus and neocortex,
-         amygdala and visual cortex. */
       --c-prefrontal: #5b7db5;
       --c-prefrontal-lateral: #5b7db5;
-      --c-prefrontal-medial: #6d6fab; /* shown as part of the DMN */
+      --c-prefrontal-medial: #6d6fab;
       --c-premotor: #7d93bf;
       --c-motor: #cf8550;
       --c-parietal: #c49f55;
@@ -124,7 +113,6 @@
       --c-neocortex: #d99a6c;
       --c-glymphatic: #7ab4d1;
 
-      /* Sky colours along the timeline. */
       --sky-night: #22305a;
       --sky-dawn: #f3a76b;
       --sky-day: #a8d5f2;
@@ -135,33 +123,28 @@
       --ui: "Fira Sans", system-ui, sans-serif;
       --onet: #ffd200;
 
-      /* Height of one screen. Inside the Ring Pages iframe 100vh is the iframe's
-         height, not the reader's screen, so the Ring script sets this in px. */
       --screen: 100vh;
       --banner-h: 46px;
-      --banner-now: var(--banner-h); /* 0 once the banner has slid away after the introduction */
+      --banner-now: var(--banner-h);
 
-      /* Title screen (s1) theme: light paper, dark type, the brain in its own
-         colours with red-orange impulses. */
       --s1-bg: var(--paper);
-      --s1-light: 0.6;          /* 0–1: white light behind the brain, as on the story's background */
+      --s1-light: 0.6;
       --s1-ink: var(--ink);
       --s1-muted: var(--muted);
       --s1-shadow: none;
-      --s1-on-ink: #fff;        /* text on a filled button in --s1-ink */
-      --s1-spark: 0;            /* 0–1: red-orange impulses running over the brain */
+      --s1-on-ink: #fff;
+      --s1-spark: 0;
       --s1-spark-color: #ff4a14;
-      --s1-whiten: 0;          /* -1 to 1: brain turned dark (below 0) or white (above 0) */
-      --s1-tint: #ffffff;       /* brain in one colour... */
-      --s1-tint-amount: 0;      /* ...this strongly, 0–1 */
-      --s1-crease: 0;           /* 0–1: --s1-spark-color light in the creases */
-      --s1-ghost: 0.8;          /* 0 solid, 1 see-through */
-      --s1-glow: 0;             /* 0–1: a soft light behind the brain, following it */
+      --s1-whiten: 0;
+      --s1-tint: #ffffff;
+      --s1-tint-amount: 0;
+      --s1-crease: 0;
+      --s1-ghost: 0.8;
+      --s1-glow: 0;
       --s1-glow-color: #ffc46b;
       --quiz-shadow: 0 24px 60px rgba(40, 30, 20, 0.12);
     }
 
-    /* Flat orange title screen with a white brain, kept for comparison: ?s1=pomarancz */
     html[data-s1="pomarancz"] {
       --s1-bg: #ff7b00;
       --s1-light: 0;
@@ -175,7 +158,6 @@
       --quiz-shadow: 0 24px 60px rgba(120, 40, 0, 0.18);
     }
 
-    /* Dark title screen: a white brain with red-orange impulses. ?s1=ciemny */
     html[data-s1="ciemny"] {
       --s1-bg: radial-gradient(ellipse 75% 70% at 55% 42%, #2a1d18 0%, #17110e 55%, #0b0807 100%);
       --s1-light: 0;
@@ -185,9 +167,6 @@
       --s1-ghost: 1;
     }
 
-    /* The previous title screen, on paper, kept for comparison: add ?s1=stary to the URL. */
-    /* Logo only: the title logo, Onet and Medonet over a more visible brain,
-       one still screen without the rest of the page. ?s1=logo */
     html[data-s1="logo"] { --banner-h: 0px; --s1-ghost: 0.5; overflow: hidden; }
     html[data-s1="logo"] :is(.premium-banner, .scroll-progress, .dek, .scroll-hint, .partner) { display: none; }
     html[data-s1="logo"] .intro { padding: 24px; gap: clamp(20px, 3vw, 32px); }
@@ -248,17 +227,15 @@
       pointer-events: none;
       transition: transform 300ms ease;
     }
-    /* After the introduction the banner slides away, and the sticky parts below take its place */
+
     html.banner-off { --banner-now: 0px; }
     html.banner-off .premium-banner { transform: translateY(-100%); }
     .premium-banner__logo { max-width: 120px; height: 32px; display: inline-block; vertical-align: middle; }
-    .premium-banner__logo path { fill: #fff; } /* the word in white, the dot stays yellow */
+    .premium-banner__logo path { fill: #fff; }
     @media (max-width: 325px) { .premium-banner__text { display: none; } }
 
     html.paywall-locked, html.paywall-locked body { overflow: hidden; touch-action: none; }
 
-    /* Film grain: --grain is a noise tile painted by the script, the same
-       strength as the grain on the 3D model, so page and graphic match. */
     body {
       margin: 0;
       color: var(--ink);
@@ -267,24 +244,19 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ---------- Intro ---------- */
-
-    /* One screen tall, over the spinning brain. */
     .intro {
-      position: relative; /* holds the partner logo at the bottom */
+      position: relative;
       min-height: var(--screen);
       display: grid;
       place-content: center;
       justify-items: center;
       gap: 20px;
-      padding: calc(var(--banner-h) + var(--screen) * 0.05) 24px calc(var(--screen) * 0.035 + 80px); /* room for the partner logo */
+      padding: calc(var(--banner-h) + var(--screen) * 0.05) 24px calc(var(--screen) * 0.035 + 80px);
       text-align: center;
       color: var(--s1-ink);
       text-shadow: var(--s1-shadow);
     }
 
-    /* Until the brain is there the title's content is hidden, then it comes in
-       piece by piece (0.5 s, from 8 px lower). Without JS it is simply shown. */
     .js-s1 .intro > * {
       opacity: 0;
       translate: 0 8px;
@@ -292,8 +264,6 @@
     }
     .s1-on .intro > * { opacity: 1; translate: 0 0; }
 
-    /* The title logo comes in word by word: "Mózg", the gauge pops on like a
-       sticker, then "na", "pełnych", "obrotach" (--i is each part's turn). */
     .js-s1 .intro > h1 { opacity: 1; translate: none; transition: none; }
     .js-s1 .title-logo__text,
     .js-s1 .title-logo__gauge {
@@ -312,7 +282,7 @@
       transform: scale(0.5) rotate(-16deg);
       transition-property: opacity, transform;
       transition-duration: 250ms, 650ms;
-      transition-timing-function: ease, cubic-bezier(0.34, 1.56, 0.64, 1); /* a little overshoot */
+      transition-timing-function: ease, cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .s1-on .title-logo__text,
     .s1-on .title-logo__gauge { opacity: 1; transform: none; }
@@ -321,24 +291,17 @@
     .s1-on .intro > :nth-child(4) { transition-delay: 270ms; }
     .s1-on .intro > :nth-child(5) { transition-delay: 360ms; }
 
-    /* Title logo: Fira Sans ExtraBold in three staggered lines with a tilted
-       gauge between "Mózg" and "na"; one SVG, so it scales as a whole. */
     .intro h1 {
       margin: 0;
-      width: min(78vw, 520px, calc(var(--screen) * 0.62)); /* short laptop screens too */
+      width: min(78vw, 520px, calc(var(--screen) * 0.62));
       line-height: 0;
     }
 
     .title-logo { display: block; width: 100%; height: auto; overflow: visible; }
 
-    /* Onet logo above the title: the dot stays yellow, the letters take the
-       title screen's text colour (white on the coloured backgrounds). */
-    /* Onet and Medonet side by side, the same height; dots yellow, letters in the text colour */
     .brand-logos { display: flex; align-items: center; justify-content: center; gap: clamp(18px, 2.4vw, 28px); }
     .onet-logo,
     .medonet-logo { display: block; width: auto; height: clamp(24px, 3vw, 33px); fill: var(--s1-ink); }
-
-    /* ---------- Introduction: plain text on the title background ---------- */
 
     .wstep {
       min-height: var(--screen);
@@ -353,7 +316,7 @@
       color: #2b2c29;
       font: 400 clamp(18px, 1.5vw, 21px)/1.55 var(--sans);
       text-wrap: pretty;
-      pointer-events: auto; /* the steps around it let clicks through */
+      pointer-events: auto;
     }
 
     .wstep__card p { margin: 0; }
@@ -363,15 +326,9 @@
       .wstep__card { font-size: 17px; }
     }
 
-    /* ---------- Test: a frosted card on the title background ---------- */
-
-    /* A short scroll lock: the section is 0.6 screen taller than the card's
-       screen, and the card stays pinned while that extra part scrolls by. */
-    .quiz { height: calc(var(--screen) * 1.6); }
+    .quiz { height: var(--screen); }
 
     .quiz__pin {
-      position: sticky;
-      top: 0;
       height: var(--screen);
       display: grid;
       place-items: center;
@@ -390,18 +347,15 @@
       backdrop-filter: blur(18px) saturate(1.15);
       box-shadow: var(--quiz-shadow);
       color: var(--s1-ink);
-      pointer-events: auto; /* the steps around it let clicks through */
+      pointer-events: auto;
     }
 
-    /* The test: full width of the card, 600 px tall (550 px on phones), the
-       optimum given by the test; it scrolls inside its own frame. */
     .quiz__frame { display: block; width: 100%; height: 600px; border: 0; }
     @media (max-width: 640px) {
       .quiz__card { padding: 12px; border-radius: 20px; }
       .quiz__frame { height: 550px; }
     }
 
-    /* Content partner at the bottom of the title screen, in the text colour */
     .partner {
       position: absolute;
       left: 50%;
@@ -414,7 +368,7 @@
       white-space: nowrap;
     }
     .partner__label { font: 300 13px/1.2 var(--sans); opacity: .85; }
-    .instytut { stroke: currentColor; stroke-width: 0.9px; stroke-linejoin: round; } /* the thin "INSTYTUT" in the Bez stresu logo, a little bolder */
+    .instytut { stroke: currentColor; stroke-width: 0.9px; stroke-linejoin: round; }
     .partner__logo { display: block; width: clamp(130px, 14vw, 176px); height: auto; fill: currentColor; }
     .title-logo__text { font: 800 290px var(--sans); fill: var(--s1-ink); }
 
@@ -428,8 +382,6 @@
       text-wrap: pretty;
     }
 
-    /* Scroll call to action: a button that scrolls to the first step. Its look
-       is picked by data-cta on <html>: linia, pigulka, obrys, kolko, myszka, strzalki. */
     .scroll-hint {
       margin: calc(var(--screen) * 0.03) 0 0;
       display: grid;
@@ -442,11 +394,11 @@
       color: var(--s1-muted);
       font: 500 14px/1 var(--sans);
       cursor: pointer;
-      pointer-events: auto; /* the steps around it let clicks through */
+      pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
     }
     .scroll-hint:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
-    .scroll-hint:active { transform: scale(0.985); } /* style spec: buttons shrink a little when pressed */
+    .scroll-hint:active { transform: scale(0.985); }
 
     .scroll-hint__icon { position: relative; display: grid; place-items: center; }
     .scroll-hint__icon i {
@@ -458,7 +410,6 @@
       transform: rotate(45deg);
     }
 
-    /* Linia: a line drawn downwards */
     [data-cta="linia"] .scroll-hint__icon {
       width: 1px;
       height: 46px;
@@ -467,7 +418,6 @@
       animation: hint 1.8s ease-in-out infinite;
     }
 
-    /* Pigułka / obrys: a rounded button with a nudging arrow, filled or outlined */
     [data-cta="pigulka"] .scroll-hint,
     [data-cta="obrys"] .scroll-hint {
       grid-auto-flow: column;
@@ -487,11 +437,9 @@
       animation: nudge 1.6s ease-in-out infinite;
     }
 
-    /* Kółko: an arrow in a ring */
     [data-cta="kolko"] .scroll-hint { color: var(--s1-ink); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
     [data-cta="kolko"] .scroll-hint__icon { width: 48px; height: 48px; border: 1.5px solid currentColor; border-radius: 50%; }
 
-    /* Myszka: a mouse with its wheel rolling */
     [data-cta="myszka"] .scroll-hint { color: var(--s1-ink); }
     [data-cta="myszka"] .scroll-hint__icon {
       width: 24px;
@@ -510,7 +458,6 @@
       animation: wheel 1.6s ease-in-out infinite;
     }
 
-    /* Myszka on phones and touch screens, where there is no mouse: the outlined pill */
     @media (max-width: 760px), (hover: none) {
       [data-cta="myszka"] .scroll-hint {
         grid-auto-flow: column;
@@ -530,7 +477,6 @@
       }
     }
 
-    /* Strzałki: three arrows lighting up one after another */
     [data-cta="strzalki"] .scroll-hint { color: var(--s1-ink); }
     [data-cta="strzalki"] .scroll-hint__icon i { display: block; margin-top: -3px; animation: cascade 1.5s ease-in-out infinite; }
     [data-cta="strzalki"] .scroll-hint__icon i:nth-child(2) { animation-delay: .18s; }
@@ -555,24 +501,18 @@
       40% { opacity: 1; }
     }
 
-    /* ---------- Scrollytelling: sticky brain + scrolling cards ---------- */
-
     .scrolly {
-      --head-h: calc(var(--banner-now) + 140px); /* the clock header, with its fading edge */
+      --head-h: calc(var(--banner-now) + 140px);
       position: relative;
-      /* Background shared by the brain's layer and the timeline header, so the
-         header blends in: a soft light behind the brain, grain and paper. */
+
       --stage:
         radial-gradient(circle at var(--brain-x, 60%) var(--brain-y, 55%), rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0) 42vmax),
         var(--grain, none) 0 0 / 128px 128px,
         var(--paper);
     }
 
-    /* The timeline header sits above the story text, which slides under it and
-       never reaches the top of the screen. The layer is as tall as the brain's,
-       so after the last step the clock is left behind and scrolls away with the brain. */
     .sticky-overlay {
-      --head-o: 0; /* hidden on the title screen until the script takes over */
+      --head-o: 0;
       position: sticky;
       top: 0;
       z-index: 2;
@@ -581,22 +521,17 @@
       pointer-events: none;
     }
 
-    /* Starts at the top of the screen and reaches below the premium banner,
-       so text sliding under the banner is hidden too. */
     .timeline-head {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: var(--head-h);
-      /* the bottom 40 px fade, so text disappears gradually as it slides under
-         (as the test's scroll areas: style spec, "Zanikające krawędzie") */
+
       -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
       mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
     }
 
-    /* The header's background and the timeline stay hidden on the title screen
-       and fade in as the brain settles (--head-o is set by the script). */
     .timeline-head::before {
       content: "";
       position: absolute;
@@ -605,8 +540,6 @@
       opacity: var(--head-o, 1);
     }
 
-    /* The brain stays pinned while the steps scroll over it. Sticky only works
-       if no ancestor has overflow: hidden, so keep those off the parents. */
     .sticky-visual {
       position: sticky;
       top: 0;
@@ -615,9 +548,6 @@
       background: var(--stage);
     }
 
-    /* Title screen background, over the paper and under the brain; it fades out
-       as the brain settles (--title-o is set by the script). Multiplying the
-       grain tile over it gives the yellow the same film grain as the paper. */
     .title-bg {
       position: absolute;
       inset: 0;
@@ -631,7 +561,6 @@
 
     html[data-s1="stary"] .title-bg { display: none; }
 
-    /* Glow behind the brain: centred where the brain is (--brain-x/y), breathing slowly */
     .title-bg::after {
       content: "";
       position: absolute;
@@ -647,15 +576,13 @@
     }
 
     .sticky-visual canvas {
-      position: relative; /* above .title-bg */
+      position: relative;
       display: block;
       width: 100%;
       height: 100%;
       opacity: 0;
     }
 
-    /* Fades in once built; --brain-o (set by the script) dims it behind the
-       introduction and the test, so their text and the card read clearly. */
     .sticky-visual.is-ready canvas { opacity: var(--brain-o, 1); animation: brain-in 900ms ease; }
     @keyframes brain-in { from { opacity: 0; } }
 
@@ -664,7 +591,7 @@
       inset: 0;
       margin: 0;
       display: grid;
-      place-items: end center; /* below the title, which sits in the middle */
+      place-items: end center;
       padding: 24px 24px calc(var(--screen) * 0.1);
       font: 500 15px/1.4 var(--sans);
       color: var(--muted);
@@ -677,12 +604,6 @@
       pointer-events: none;
     }
 
-
-
-    /* ---------- Timeline: a clock running through the day ---------- */
-
-    /* The hour on a tilted sticker in the colour of the sky at that time, as the
-       clocks in the article, with the time beside it. */
     .timeline {
       position: absolute;
       top: calc(var(--banner-now) + 28px);
@@ -695,8 +616,7 @@
       pointer-events: none;
       opacity: var(--head-o, 1);
       font-family: var(--sans);
-      /* Own compositing layer: the clock changes every frame while scrolling, and this
-         keeps those repaints from touching the large background behind it. */
+
       will-change: transform;
     }
 
@@ -710,12 +630,10 @@
       color: var(--ink);
     }
 
-    /* ---------- Steps ---------- */
-
     .steps {
       position: relative;
       z-index: 1;
-      margin-top: calc(var(--screen) * -1); /* pull the steps up so they scroll over the sticky brain */
+      margin-top: calc(var(--screen) * -1);
       pointer-events: none;
     }
 
@@ -726,10 +644,8 @@
       padding: 0 max(24px, 6vw);
     }
 
-    /* The last one is shorter, so the article follows without a screen of empty space */
     .step:last-child { min-height: calc(var(--screen) * 0.7); }
 
-    /* Story text sits straight on the page, without a box. */
     .step-text {
       width: min(440px, 36vw);
       font: 400 clamp(18px, 1.4vw, 21px)/1.5 var(--sans);
@@ -739,7 +655,6 @@
     .step-text p { margin: 0; }
     .step-text p + p { margin-top: 0.8em; }
 
-    /* Structure names in the text, in the colour they have on the model */
     .step-text mark {
       padding: 0.02em 0.22em;
       border-radius: 3px;
@@ -751,8 +666,6 @@
       box-decoration-break: clone;
     }
 
-    /* ---------- Article: the day hour by hour ---------- */
-
     .article {
       width: min(680px, 100%);
       margin: 0 auto;
@@ -763,7 +676,6 @@
 
     .article p { margin: 0 0 1em; }
 
-    /* Headline: "24" on a tilted yellow sticker in the line, like the gauge in the title logo */
     .article__title {
       margin: 0 0 24px;
       font: 800 clamp(34px, 3.4vw, 44px)/1.2 var(--sans);
@@ -790,14 +702,13 @@
     .author__photo { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #e7e1d4; object-fit: cover; }
     .author__name { margin: 0 !important; font-weight: 700; line-height: 1.3; }
 
-    /* Clock: the hour on a tilted sticker in the colour of the sky at that time */
     .clock {
       display: flex;
       align-items: center;
       gap: 14px;
       margin: 48px 0 24px;
       padding-top: 40px;
-      border-top: 2px solid var(--ink); /* a strong rule above the first clock, where the hours begin */
+      border-top: 2px solid var(--ink);
     }
     .clock ~ .clock { margin-top: 72px; padding-top: 0; border-top: 0; }
     .clock__face { flex: none; width: 80px; height: 80px; overflow: visible; }
@@ -815,7 +726,6 @@
       color: var(--ink);
     }
 
-    /* A quote set large to break up the text */
     .pull {
       margin: 44px 0;
       padding-left: 22px;
@@ -826,9 +736,6 @@
     }
     .pull cite { display: block; margin-top: 12px; font: 300 15px/1.3 var(--sans); font-style: normal; letter-spacing: 0; color: var(--muted); }
 
-    /* Video: a 16:9 frame with the poster and a yellow play button. The poster
-       comes after the title screen, and the film itself is downloaded only when
-       the reader presses play. */
     .video {
       position: relative;
       margin: 36px 0;
@@ -861,7 +768,7 @@
     .video__play:hover::before { transform: scale(1.06); }
     .video__play:active::before { transform: scale(0.985); }
     .video__play:focus-visible { outline: 2px solid var(--onet); outline-offset: -6px; }
-    /* Title in the top left corner over the poster, on a soft shade; gone once it plays */
+
     .video__title {
       position: absolute;
       inset: 0 0 auto;
@@ -874,15 +781,12 @@
       transition: opacity 250ms ease;
     }
     .video.is-playing .video__play { display: none; }
-    /* While it plays the title hides, and comes back with the controls: on hover,
-       for a few seconds after a tap on phones, and whenever it is paused. */
+
     .video.is-playing .video__title { opacity: 0; }
     .video.is-playing.is-paused .video__title,
     .video.is-playing.show-title .video__title { opacity: 1; }
     @media (hover: hover) { .video.is-playing:hover .video__title { opacity: 1; } }
 
-    /* Mini player: a yellow pill in the bottom right corner while a film plays off
-       screen; play/pause, and the title takes you back to the film. */
     .mini-player {
       position: fixed;
       right: 16px;
@@ -901,7 +805,7 @@
     }
     .mini-player[hidden] { display: none; }
     @keyframes mini-in { from { opacity: 0; translate: 0 12px; } }
-    /* Play/pause: an ink disc inside a ring that fills as the film plays */
+
     .mini-player__toggle {
       position: relative;
       flex: none;
@@ -939,11 +843,9 @@
     .mini-player :is(button):active { transform: scale(0.985); }
     .mini-player :is(button):focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
     @media (prefers-reduced-motion: reduce) { .mini-player { animation: none; } }
-    /* Phones: the parent page's bottom navigation bar covers the iframe's bottom
-       44 px and is not counted in its available height, so sit above it. */
+
     @media (max-width: 760px), (hover: none) { .mini-player { bottom: calc(16px + 44px); } }
 
-    /* Infographic: a white card of foods, each on a tilted sticker as in the test */
     .info {
       margin: 40px 0;
       padding: 28px 28px 22px;
@@ -991,8 +893,6 @@
     }
     .info__source { margin-top: 20px; font-size: 13px; color: #8b8c85; }
 
-
-
     @media (max-width: 560px) {
       .info { padding: 22px 18px 18px; }
       .info__grid { grid-template-columns: 1fr; gap: 18px; }
@@ -1008,11 +908,9 @@
     }
     .bio p { margin-bottom: 0.7em; }
 
-    /* ---------- Footer (as in the other special projects) ---------- */
-
     .page-footer {
       padding: 64px 16px;
-      background: #fff; /* set apart from the paper of the article */
+      background: #fff;
       text-align: center;
       font-family: var(--sans);
       color: var(--ink);
@@ -1025,14 +923,12 @@
     .footer-line { margin-bottom: 8px; }
     .footer-title { margin-top: 36px; margin-bottom: 10px; font-weight: 700; }
     .footer-title + .footer-block { margin-bottom: 30px; }
-    .footer-partner { display: block; width: 150px; height: auto; margin: -16px auto 0; fill: var(--ink); } /* under the partner's name */
+    .footer-partner { display: block; width: 150px; height: auto; margin: -16px auto 0; fill: var(--ink); }
 
     @media (max-width: 620px) {
       .page-footer { padding: 52px 16px 64px; }
       .footer-block { font-size: 13px; }
     }
-
-    /* ---------- Phones: brain on top, text slides up from the bottom ---------- */
 
     @media (max-width: 760px) {
       .step {
@@ -1046,8 +942,7 @@
         max-width: 520px;
         padding: 64px 16px;
         font-size: 17px;
-        /* On phones the text passes over the brain: a see-through wash in the
-           paper colour behind it, fading out at the top and bottom. */
+
         background: linear-gradient(to bottom,
           rgba(244, 241, 233, 0) 0, rgba(244, 241, 233, 0.55) 64px,
           rgba(244, 241, 233, 0.55) calc(100% - 64px), rgba(244, 241, 233, 0) 100%);
@@ -1058,14 +953,11 @@
       .scrolly { --head-h: calc(var(--banner-now) + 132px); }
     }
 
-    /* Line breaking, as in the style spec: headings, leads, step texts, captions and
-       the footer break into even lines; running text only avoids a lone last word. */
     .dek, .wstep__card, .clock__label, .info__title, .info__item,
     .info__avoid h4, .info__source, .author__name, .partner__label, .footer-block,
     .article__title, .article__lead, .pull { text-wrap: balance; }
     .article p:not(.article__lead), .bio p { text-wrap: pretty; }
-    /* Brain steps run to 7+ lines, where browsers skip text-wrap: balance, so a
-       script balances them (see "Balanced paragraphs"); pretty until it runs. */
+
     .step-text { text-wrap: pretty; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1075,7 +967,7 @@
       .title-bg::after { animation: none; }
       .js-s1 .intro > *, .js-s1 .title-logo__text, .js-s1 .title-logo__gauge { translate: none; transform: none; transition-duration: 1ms; transition-delay: 0s; }
     }
-  </style>
+</style>
 </head>
 <body>
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -1096,7 +988,7 @@
 
   <main>
     <section class="scrolly" aria-label="Mózg w ciągu doby – model 3D">
-      <!-- Timeline header: stays above the story text, which slides under it. -->
+
       <div class="sticky-overlay" aria-hidden="true">
         <div class="timeline-head">
           <div class="timeline" aria-hidden="true">
@@ -1116,36 +1008,15 @@
       <div class="sticky-visual" id="brainVisual">
         <div class="title-bg" aria-hidden="true"></div>
         <canvas id="brainCanvas" role="img" aria-label="Obracający się model 3D mózgu z zaznaczonymi obszarami, o których mowa w tekście"></canvas>
-        <p class="loader" id="brainLoader"></p> <!-- empty; says so only if the browser has no 3D -->
+        <p class="loader" id="brainLoader"></p>
 
       </div>
 
-      <!--
-        Each step is one keyframe:
-          data-time       time of day when the text is centred (HH:MM). The timeline runs
-                          from the first step's time to 24 hours later; times after
-                          midnight continue the same night.
-          data-highlight  what lights up, separated by spaces. Optional strength after a colon, e.g.
-                          "prefrontal:0.45": the structure keeps its shape in a paler colour.
-                          Names: prefrontal, premotor, motor, parietal, temporal, occipital,
-                          visual, cingulate, pcc, prefrontal-medial, cerebellum, brainstem,
-                          hypothalamus, scn, pineal, accumbens, hippocampus, amygdala, plus the
-                          groups "dmn" and "neocortex" and "glymphatic" (a wave washing
-                          through the brain). Structures inside the brain make the cortex
-                          see-through automatically.
-          data-yaw        turn around the vertical axis in degrees (0 = face towards you).
-                          Keep the values going one way to keep the brain turning one way.
-          data-pitch      tilt in degrees: positive shows the top, negative the underside.
-          data-zoom       1 fits the screen, 1.1 is 10% closer.
-        In the text, <mark data-token="name"> colours a word like that structure on the model.
-        Between two steps the model, colours and timeline move with the scroll.
-      -->
       <div class="steps">
-        <!-- Title screen: the brain spins in the middle behind it, then settles
-             into its place for the first step as you scroll. -->
+
         <header class="intro">
           <div class="brand-logos">
-            <svg class="onet-logo" viewBox="0 14.78 97 30.44" role="img" aria-label="Onet"> <!-- cropped to the dot, as the Medonet one, so the dots match -->
+            <svg class="onet-logo" viewBox="0 14.78 97 30.44" role="img" aria-label="Onet">
               <path fill="#FFD200" d="M15.22 45.22C23.6258 45.22 30.44 38.4058 30.44 30C30.44 21.5942 23.6258 14.78 15.22 14.78C6.81423 14.78 0 21.5942 0 30C0 38.4058 6.81423 45.22 15.22 45.22Z"></path>
               <path d="M44.28 38.04C39.77 38.04 36.23 34.51 36.23 29.99C36.23 25.47 39.76 21.94 44.28 21.94C48.8 21.94 52.36 25.47 52.36 29.99C52.36 34.51 48.81 38.04 44.28 38.04ZM44.28 25.86C41.94 25.86 40.24 27.6 40.24 29.99C40.24 32.38 41.94 34.12 44.28 34.12C46.62 34.12 48.35 32.38 48.35 29.99C48.35 27.6 46.64 25.86 44.28 25.86Z"></path>
               <path d="M64.3499 37.61V28.74C64.3499 26.82 63.2499 25.67 61.3999 25.67C59.3099 25.67 58.1899 27.42 58.1199 27.78V37.61H54.1099V22.39H57.6199V23.95C58.5499 22.65 60.6299 21.94 62.5899 21.94C64.2099 21.94 65.6699 22.52 66.6899 23.58C67.7799 24.71 68.3599 26.33 68.3599 28.26V37.61H64.3499Z"></path>
@@ -1164,7 +1035,7 @@
             </svg>
           </div>
           <h1>
-            <!-- Laid out on the 2000 px wide design; the needle is turned by the script. -->
+
             <svg class="title-logo" viewBox="110 245 1800 780" role="img" aria-label="Mózg na pełnych obrotach">
               <defs>
                 <linearGradient id="gaugeBand" x1="0" y1="0" x2="0" y2="1">
@@ -1176,7 +1047,7 @@
               <g transform="translate(1460 597) rotate(8.5)">
                 <rect x="-172" y="-184" width="344" height="368" rx="46" fill="#ff7a00" stroke="#f4f1e9" stroke-width="14"></rect>
                 <g transform="translate(0 31)">
-                  <!-- dial: a dark band from 195° to 343°, a lighter hub inside -->
+
                   <path fill="url(#gaugeBand)" d="M -131.4 -35.2 A 136 136 0 0 1 130.1 -39.8 L 70.8 -21.6 A 74 74 0 0 0 -71.5 -19.2 Z"></path>
                   <path fill="#f08a1c" d="M -58 -15.5 A 60 60 0 0 1 57.4 -17.5 L 0 0 Z"></path>
                   <g id="gaugeNeedle" transform="rotate(336)">
@@ -1224,7 +1095,6 @@
           </div>
         </header>
 
-        <!-- Introduction: on the title background, the brain spinning behind the card. -->
         <section class="wstep" aria-label="Wstęp">
           <div class="wstep__card">
             <p>Wracasz do tego samego maila po kilka razy. W połowie dnia coraz trudniej ci się skupić. To po prostu biologia. Twój mózg nie pracuje z taką samą intensywnością przez całą dobę. Im lepiej poznasz ten rytm, tym łatwiej będzie ci pracować, uczyć się, odpoczywać i podejmować decyzje.</p>
@@ -1232,11 +1102,10 @@
           </div>
         </section>
 
-        <!-- Test: on the title background, the brain spinning behind the card. -->
         <section class="quiz" id="quiz" aria-label="Test">
           <div class="quiz__pin">
             <div class="quiz__card">
-              <!-- The test, a separate Ring Pages page; ?tryb=matka is required (no own title, no height talk with Onet). Loaded after the title screen. -->
+
               <iframe class="quiz__frame" data-src="https://pg855gqneg0t.ring-pages.io/?tryb=matka" title="Test Mózg na pełnych obrotach"></iframe>
             </div>
           </div>
@@ -1563,7 +1432,6 @@
     </div>
   </footer>
 
-  <!-- Mini player: while a film plays off screen, a yellow pill in the corner -->
   <div class="mini-player" id="miniPlayer" hidden>
     <button class="mini-player__toggle" type="button" aria-label="Pauza">
       <svg class="mini-player__ring" viewBox="0 0 52 52" aria-hidden="true"><circle class="mini-player__track" cx="26" cy="26" r="24"></circle><circle class="mini-player__bar" cx="26" cy="26" r="24" pathLength="100"></circle></svg>
@@ -1684,7 +1552,7 @@
       window.addEventListener('resize', requestRenderedHeightSync);
     });
   })();
-  </script>
+</script>
 
   <script>
   (function () {
@@ -1716,31 +1584,44 @@
     if (params.has('paywallTest')) {
       sdkReady.then(function () { triggerPaywall('?paywallTest'); });
     }
+
+    var TEST_ORIGIN = 'https://pg855gqneg0t.ring-pages.io';
+    window.addEventListener('message', function (event) {
+      if (event.origin !== TEST_ORIGIN) return;
+      if (event.data && event.data.type === 'neuro:start') triggerPaywall('test start');
+    });
+
+    var second = document.querySelectorAll('.step')[1];
+    if (second && 'IntersectionObserver' in window) {
+      var seen = new IntersectionObserver(function (entries) {
+        if (!entries[entries.length - 1].isIntersecting) return;
+        seen.disconnect();
+        triggerPaywall('second brain step');
+      }, { rootMargin: '-45% 0px -45% 0px' });
+      seen.observe(second);
+    }
   })();
-  </script>
+</script>
 
   <script>
-    // Photos and the test further down load only after the title screen is complete.
     window.s1Gotowe.then(function () {
       document.querySelectorAll('img[data-src], iframe[data-src]').forEach(function (img) {
         img.src = img.getAttribute('data-src');
         img.removeAttribute('data-src');
       });
     });
-  </script>
+</script>
 
   <script>
   (function () {
-    // Videos: nothing is fetched until play. The poster comes after the title
-    // screen (s1Gotowe); on play the MP4 is attached, and the browser streams it
-    // in pieces (range requests), a few dozen seconds ahead, never the whole file.
+
     var frames = Array.prototype.slice.call(document.querySelectorAll('.video'));
     if (!frames.length) return;
 
     var mini = document.getElementById('miniPlayer');
     var miniToggle = mini.querySelector('.mini-player__toggle');
     var miniTitle = mini.querySelector('.mini-player__title');
-    var current = null; // the film last started
+    var current = null;
     function updateMini() {
       var show = current && !current.miniVisible;
       mini.hidden = !show;
@@ -1748,7 +1629,7 @@
       var video = current.querySelector('video');
       mini.classList.toggle('is-paused', video.paused);
       miniToggle.setAttribute('aria-label', video.paused ? 'Odtwórz' : 'Pauza');
-      // Only the first sentence of the title, up to its question mark or full stop.
+
       var title = current.querySelector('.video__title').textContent;
       miniTitle.textContent = (title.match(/^.*?[?.!](?=\s|$)/) || [title])[0];
       showProgress(video);
@@ -1781,11 +1662,11 @@
         video.controls = true;
         if (!video.getAttribute('src')) video.src = frame.dataset.mp4;
         var started = video.play();
-        if (started && started.catch) started.catch(function () {}); // the controls are there to retry
+        if (started && started.catch) started.catch(function () {});
       });
-      // No "Save video as" in the right-click menu (controlslist="nodownload" hides the menu item).
+
       video.addEventListener('contextmenu', function (event) { event.preventDefault(); });
-      // The title comes back with the controls: while paused, and for 3 s after a tap.
+
       var hideTimer = 0;
       video.addEventListener('pause', function () { frame.classList.add('is-paused'); });
       video.addEventListener('playing', function () { frame.classList.remove('is-paused'); });
@@ -1794,7 +1675,7 @@
         window.clearTimeout(hideTimer);
         hideTimer = window.setTimeout(function () { frame.classList.remove('show-title'); }, 3000);
       }, { passive: true });
-      // Mini player: shown while this film has been started and is off screen.
+
       frame.miniVisible = true;
       if ('IntersectionObserver' in window) {
         new IntersectionObserver(function (entries) {
@@ -1806,7 +1687,7 @@
       video.addEventListener('pause', updateMini);
       video.addEventListener('timeupdate', function () { if (current === frame && !mini.hidden) showProgress(video); });
       video.addEventListener('ended', function () { if (current === frame) current = null; updateMini(); });
-      // Only one video plays at a time.
+
       video.addEventListener('play', function () {
         frames.forEach(function (other) {
           var v = other.querySelector('video');
@@ -1815,13 +1696,11 @@
       });
     });
   })();
-  </script>
+</script>
 
   <script>
   (function () {
-    // Balanced paragraphs in the brain steps. Browsers balance only up to about
-    // six lines, so each paragraph is narrowed to the smallest width that keeps
-    // its number of lines: the lines come out even, with no lone last word.
+
     var paragraphs = Array.prototype.slice.call(document.querySelectorAll('.step-text p'));
     if (!paragraphs.length) return;
     function balance(p) {
@@ -1844,12 +1723,11 @@
     window.addEventListener('resize', later);
     window.addEventListener('screen:resize', later);
   })();
-  </script>
+</script>
 
   <script>
   (function () {
-    // The premium banner slides away once the introduction (s2) has scrolled past,
-    // and comes back when you scroll up to it.
+
     var intro = document.querySelector('.wstep');
     if (!intro) return;
     var root = document.documentElement;
@@ -1859,7 +1737,7 @@
       var off = intro.getBoundingClientRect().bottom <= 0;
       if (off === root.classList.contains('banner-off')) return;
       root.classList.toggle('banner-off', off);
-      window.dispatchEvent(new Event('banner:toggle')); // the 3D layout measures the timeline again
+      window.dispatchEvent(new Event('banner:toggle'));
     }
     function request() { if (ticking) return; ticking = true; window.requestAnimationFrame(update); }
     window.addEventListener('scroll', request, { passive: true });
@@ -1867,7 +1745,7 @@
     window.addEventListener('screen:resize', request);
     update();
   })();
-  </script>
+</script>
 
   <script>
   (function () {
@@ -1887,11 +1765,11 @@
     window.addEventListener('load', update);
     update();
   })();
-  </script>
+</script>
 
   <script>
   (function () {
-    // The scroll button on the title screen takes you to the next screen: the introduction.
+
     var button = document.getElementById('scrollHint');
     var first = document.querySelector('.wstep') || document.querySelector('.quiz') || document.querySelector('.step');
     if (!button || !first) return;
@@ -1900,17 +1778,15 @@
       first.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: first.classList.contains('quiz') ? 'start' : 'center' });
     });
   })();
-  </script>
+</script>
 
   <script>
   (function () {
-    // The gauge in the title logo: the needle sweeps up from the bottom of the
-    // dial, then trembles at high revs and now and then blips the throttle.
-    // Angles in degrees, clockwise from pointing right; the dial runs 195–343.
+
     var needle = document.getElementById('gaugeNeedle');
     if (!needle) return;
     var MIN = 197, REST = 330, MAX = 346;
-    var SWEEP = 1.3; // seconds from MIN up to the revs
+    var SWEEP = 1.3;
     var BLIP_EVERY = 5.5, BLIP_LENGTH = 0.9;
 
     function show(angle) { needle.setAttribute('transform', 'rotate(' + angle.toFixed(2) + ')'); }
@@ -1920,7 +1796,7 @@
     function angleAt(t) {
       if (t < SWEEP) {
         var k = t / SWEEP;
-        var eased = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); // overshoots a little
+        var eased = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2);
         return MIN + (REST - MIN) * eased;
       }
       var tremble = 3.5 * Math.sin(t * 9.1) + 2 * Math.sin(t * 15.7) + 1.2 * Math.sin(t * 23.3);
@@ -1931,7 +1807,7 @@
     }
     function frame(now) {
       if (!visible || document.hidden) { running = false; start = 0; return; }
-      if (!start) start = now - (needle.dataset.ran ? SWEEP * 1000 : 0); // the sweep plays once
+      if (!start) start = now - (needle.dataset.ran ? SWEEP * 1000 : 0);
       needle.dataset.ran = '1';
       show(angleAt((now - start) / 1000));
       requestAnimationFrame(frame);
@@ -1950,12 +1826,12 @@
     }
     document.addEventListener('visibilitychange', resume);
     show(MIN);
-    // The sweep starts when the title has come in, not while it is still hidden.
+
     (window.s1Widoczny || Promise.resolve()).then(function () {
-      window.setTimeout(function () { started = true; resume(); }, 450); // once the gauge has popped on
+      window.setTimeout(function () { started = true; resume(); }, 450);
     });
   })();
-  </script>
+</script>
 
   <script type="module">
     import * as THREE from 'three';
@@ -1963,12 +1839,6 @@
     import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
     import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
     import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
-
-    /* =====================================================================
-       REGIONS
-       Everything that can light up. Steps refer to these names (and the
-       groups below) in data-highlight; colours come from --c-<name> in CSS.
-       ===================================================================== */
 
     const REGIONS = [
       'prefrontal-lateral', 'prefrontal-medial', 'premotor', 'motor', 'parietal', 'temporal',
@@ -1979,33 +1849,21 @@
     const N = REGIONS.length;
     const GROUPS = {
       prefrontal: ['prefrontal-lateral', 'prefrontal-medial'],
-      dmn: ['prefrontal-medial', 'pcc'], // default mode network hubs named in the text
+      dmn: ['prefrontal-medial', 'pcc'],
       neocortex: ['prefrontal-lateral', 'prefrontal-medial', 'premotor', 'motor', 'parietal', 'temporal',
         'occipital', 'cingulate', 'pcc', 'cortex'],
     };
-    // Highlighting any of these makes the outer cortex see-through.
-    const DEEP = new Set(['hypothalamus', 'scn', 'pineal', 'accumbens', 'hippocampus', 'amygdala', 'pcc']);
-    // Cortex on the inner walls between the hemispheres: when highlighted, it is drawn
-    // in front of the see-through outer surface so it stays visible.
-    const WALLS = new Set(['prefrontal-medial', 'pcc']);
 
-    /* =====================================================================
-       SETTINGS: the Neurotorium atlas
-       Brain structures from the Neurotorium 3D atlas (© Lundbeck Foundation),
-       used under Onet's agreement. One Draco-compressed file per structure in
-       models/neurotorium/, named by Neurotorium's structure code.
-         region  highlight the part belongs to; a function can split a part by position
-         inner   drawn only while highlighted (structures inside, surface overlays)
-         overlay lies on another part's surface; drawn slightly in front to avoid flicker
-         marker  radius in cm of a glowing dot, for structures too small to see
-       ===================================================================== */
+    const DEEP = new Set(['hypothalamus', 'scn', 'pineal', 'accumbens', 'hippocampus', 'amygdala', 'pcc']);
+
+    const WALLS = new Set(['prefrontal-medial', 'pcc']);
 
     const ATLAS = {
       models: 'models/neurotorium/',
       matcap: 'textures/matcaps/80726C_DCDBD7_9AA6C2_B7BFCA-256px.png',
       highlightMatcap: 'textures/matcaps/8C5945_D4C0B6_C3A49C_430504bw-256px.png',
       parts: [
-        // Outer brain
+
         { code: '1.1.1.3.0', name: 'Prefrontal cortex', region: medialOrLateral('prefrontal-medial', 'prefrontal-lateral') },
         { code: '1.1.1.4.0', name: 'Premotor cortex', region: 'premotor' },
         { code: '1.1.1.5.1', name: 'Precentral gyrus (primary motor cortex)', region: 'motor' },
@@ -2024,7 +1882,7 @@
         { code: '4.2.0.0.0', name: 'Midbrain', region: 'brainstem' },
         { code: '4.3.0.0.0', name: 'Pons', region: 'brainstem' },
         { code: '4.1.0.0.0', name: 'Medulla oblongata', region: 'brainstem' },
-        // Shown only while highlighted
+
         { code: '1.1.3.1.0', name: 'Primary visual cortex', region: 'visual', inner: true, overlay: true },
         { code: '3.2.0.0.0', name: 'Hypothalamus', region: 'hypothalamus', inner: true },
         { code: '3.2.4.0.0', name: 'Suprachiasmatic nucleus', region: 'scn', inner: true, marker: 0.28 },
@@ -2037,7 +1895,6 @@
       ],
     };
 
-    // Vertices on the inner face of a part, next to the midline, form their own region.
     function medialOrLateral(medial, lateral) {
       return (p, n, box) => {
         const side = p.x - (box.min.x + box.max.x) / 2;
@@ -2045,12 +1902,11 @@
       };
     }
 
-    // The back part of a structure (along the front-back axis) forms its own region.
     function posteriorPart(posterior, rest, fraction = 0.35) {
       return (p, n, box) => ((p.z - box.min.z) / (box.max.z - box.min.z) < fraction ? posterior : rest);
     }
 
-    const MODEL_RADIUS = 0.9; // every model is scaled to this bounding radius
+    const MODEL_RADIUS = 0.9;
     const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
     const lerp = (a, b, t) => a + (b - a) * t;
     const smoothstep = (e0, e1, v) => {
@@ -2059,9 +1915,6 @@
     };
     const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-    // Film grain strength: the spread of brightness noise in display colours.
-    // Neurotorium uses about 0.1. The page background gets a matching noise tile.
-    // Off for now: a clean background, as in the test.
     const GRAIN = 0;
     (function paintPageGrain() {
       if (!GRAIN) return;
@@ -2074,7 +1927,7 @@
       const hex = cssVar('--paper').replace('#', '');
       const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
       for (let i = 0; i < image.data.length; i += 4) {
-        const n = (Math.random() - 0.5) * GRAIN * 255; // same spread as the grain on the model
+        const n = (Math.random() - 0.5) * GRAIN * 255;
         image.data[i] = r + n;
         image.data[i + 1] = g + n;
         image.data[i + 2] = b + n;
@@ -2083,15 +1936,6 @@
       context.putImageData(image, 0, 0);
       document.documentElement.style.setProperty('--grain', `url(${tile.toDataURL()})`);
     })();
-
-    /* =====================================================================
-       PART 1. Shading shared by every part
-       Matcap shading as in the Neurotorium atlas: lighting comes from an image
-       of a lit sphere instead of lights. Each vertex carries a region number
-       (aRegion) and a shade (aOcclusion). Uniforms set from the scroll decide
-       how strongly each region is coloured, whether the cortex is
-       see-through and whether the glymphatic wave is running.
-       ===================================================================== */
 
     const shading = {
       uRegionWeights: { value: REGIONS.map(() => 0) },
@@ -2118,7 +1962,7 @@
       if (inner) material.defines = { REGION_INNER: '' };
       if (wallsOnly) material.defines = { REGION_INNER: '', REGION_WALLS_ONLY: '' };
       if (overlay) {
-        // Overlays such as the visual cortex lie exactly on a lobe's surface.
+
         material.polygonOffset = true;
         material.polygonOffsetFactor = -1;
         material.polygonOffsetUnits = -4;
@@ -2178,9 +2022,6 @@
               p = fract(p * 0.3183099 + 0.1) * 17.0;
               return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
             }
-            // Impulses: points scattered through the brain, most of which glow
-            // now and then, each at its own moment. A glow swells slowly, then
-            // spreads and fades like a soft blob.
             float impulses(vec3 p, float t) {
               vec3 q = p * 3.5;
               vec3 cell = floor(q);
@@ -2192,7 +2033,7 @@
                 vec3 offset = vec3(float(x), float(y), float(z));
                 vec3 id = cell + offset;
                 float seed = cellHash(id);
-                if (seed < 0.25) continue; // this cell has no point
+                if (seed < 0.25) continue;
                 vec3 point = offset + vec3(cellHash(id + 11.3), cellHash(id + 27.1), cellHash(id + 43.7)) - local;
                 float life = fract(t * 0.2 + seed * 7.0);
                 float flash = smoothstep(0.0, 0.3, life) * (1.0 - smoothstep(0.3, 0.9, life));
@@ -2201,52 +2042,38 @@
               return glow;
             }`)
           .replace('#include <colorspace_fragment>', `#include <colorspace_fragment>
-            // Film grain in display colours, one speck per device pixel, as on the page.
             gl_FragColor.rgb += (grainNoise(gl_FragCoord.xy) - 0.5) * uGrain;`)
           .replace('#include <opaque_fragment>', `{
-              // Tissue: the atlas matcap, darkened in creases; muted while something else is in focus.
               vec3 tissue = outgoingLight * vOcclusion;
               vec3 grey = vec3(dot(tissue, vec3(0.2126, 0.7152, 0.0722)));
-              // Title screen: above 0 the brain turns white, below 0 dark charcoal.
               tissue = uWhiten >= 0.0
-                ? mix(tissue, vec3(0.65 + 1.6 * grey.r), uWhiten) // reaches above 1 because tone mapping greys it
+                ? mix(tissue, vec3(0.65 + 1.6 * grey.r), uWhiten)
                 : mix(tissue, vec3(0.04 + 0.14 * grey.r), -uWhiten);
-              // Title screen: the brain in one colour, still shaded by the matcap.
               tissue = mix(tissue, uTint * (0.1 + 1.5 * grey.r), uTintAmount);
-              // Title screen: light in the creases, where the matcap shading is darkest.
               float crease = (1.0 - smoothstep(0.16, 0.42, grey.r)) * uCrease;
               tissue = mix(tissue, mix(tissue, grey, 0.6), uFocus * (1.0 - vRegionWeight));
-              // Highlight: a neutral grey matcap tinted with the region colour.
               vec3 shade = texture2D(uHighlightMatcap, uv).rgb;
               vec3 lit = vRegionColor * (0.3 + 0.75 * shade) * vOcclusion;
-              lit = mix(lit, vec3(dot(lit, vec3(0.2126, 0.7152, 0.0722))), 0.25); // a little greyer, like the atlas
+              lit = mix(lit, vec3(dot(lit, vec3(0.2126, 0.7152, 0.0722))), 0.25);
               outgoingLight = mix(tissue, lit, vRegionWeight);
               outgoingLight = mix(outgoingLight, uSparkColor * 1.2, crease);
-              // Glymphatic step: waves of fluid washing through the brain.
               float wave = 0.5 + 0.5 * sin(dot(vBrainPosition, vec3(0.0, 0.45, 1.0)) * 16.0 - uTime * 2.4);
               outgoingLight = mix(outgoingLight, uWashColor * (0.55 + 0.6 * shade.r), uWash * (0.3 + 0.5 * wave));
               #ifdef REGION_INNER
                 #ifdef REGION_WALLS_ONLY
-                  // Only clearly highlighted inner-wall cortex is drawn in this pass,
-                  // not a faint tint of the whole cortex.
                   if (vRegionWall < 0.5) discard;
                   diffuseColor.a *= smoothstep(0.4, 0.8, vRegionWeight);
                 #else
-                  // Structures inside appear only while they are highlighted.
                   diffuseColor.a *= smoothstep(0.02, 0.35, vRegionWeight);
                 #endif
                 if (diffuseColor.a < 0.01) discard;
               #else
-                // See-through cortex: edges stay visible, faces turned to you fade out.
                 float facing = abs(dot(normalize(normal), normalize(vViewPosition)));
                 float seeThrough = mix(0.05 + 0.45 * pow(1.0 - facing, 2.0), 0.92, vRegionWeight);
                 diffuseColor.a *= mix(1.0, seeThrough, uGhost);
-                // A white or dark brain keeps a veil over the faces turned to you.
                 diffuseColor.a = max(diffuseColor.a, 0.32 * abs(uWhiten) * uGhost);
-                // Title screen impulses glow through the see-through surface.
                 if (uSpark > 0.0) {
                   float spark = clamp(impulses(vBrainPosition, uTime) * 1.8, 0.0, 1.0) * uSpark;
-                  // tinted like the glymphatic wash: the colour follows the matcap shading
                   outgoingLight = mix(outgoingLight, uSparkColor * (0.75 + 0.6 * shade.r), spark);
                   diffuseColor.a = max(diffuseColor.a, spark * 0.9);
                 }
@@ -2257,7 +2084,6 @@
       return material;
     }
 
-    // A matcap painted in code, used when the atlas files can't be loaded.
     function paintMatcap(shade) {
       const size = 128;
       const canvas = document.createElement('canvas');
@@ -2279,18 +2105,18 @@
       }
       context.putImageData(image, 0, 0);
       const texture = new THREE.CanvasTexture(canvas);
-      texture.colorSpace = THREE.LinearSRGBColorSpace; // read as linear light, like the atlas matcaps
+      texture.colorSpace = THREE.LinearSRGBColorSpace;
       return texture;
     }
 
     const fallbackMatcaps = () => ({
-      // warm grey with a cool rim, close to the atlas look
+
       matcap: paintMatcap((x, y, z) => {
         const d = clamp(-0.45 * x + 0.55 * y + 0.7 * z, 0, 1);
         const rim = Math.pow(1 - z, 3);
         return [118 + 90 * d + 120 * rim, 100 + 82 * d + 130 * rim, 92 + 78 * d + 150 * rim].map((v) => clamp(v, 0, 255));
       }),
-      // neutral grey for tinted highlights
+
       highlight: paintMatcap((x, y, z) => {
         const d = clamp(-0.4 * x + 0.6 * y + 0.7 * z, 0, 1);
         const spot = Math.pow(clamp(-0.3 * x + 0.5 * y + 0.81 * z, 0, 1), 24);
@@ -2299,28 +2125,16 @@
       }),
     });
 
-    /* =====================================================================
-       See-through cortex as one surface
-       The outer brain is many overlapping parts. Blending them all while the
-       cortex is see-through would show every part through every other part,
-       which looks like layers piling up during the fade. Instead, a
-       depth-only pass marks the outermost surface first, so only that
-       surface is blended. Highlighted cortex is drawn before that pass, so
-       highlighted inner walls (such as the DMN hubs) still show through.
-       ===================================================================== */
-
     function createDepthOnlyMaterial() {
       return new THREE.MeshBasicMaterial({
         colorWrite: false,
-        transparent: true,         // sorted with the other passes by renderOrder
-        polygonOffset: true,       // a hair behind, so the outer surface itself passes the depth test
+        transparent: true,
+        polygonOffset: true,
         polygonOffsetFactor: 1,
         polygonOffsetUnits: 1,
       });
     }
 
-    // Draw order while see-through: 0 structures inside and highlighted cortex,
-    // 1 depth of the outer surface, 2 the outer surface itself.
     function addSeeThroughPasses(shellMeshes, highlightMaterial, depthMaterial) {
       const extra = [];
       for (const mesh of shellMeshes) {
@@ -2330,7 +2144,7 @@
           pass.quaternion.copy(mesh.quaternion);
           pass.scale.copy(mesh.scale);
           pass.renderOrder = order;
-          pass.visible = false; // only while the cortex is see-through
+          pass.visible = false;
           mesh.parent.add(pass);
           extra.push(pass);
         }
@@ -2339,13 +2153,9 @@
       return extra;
     }
 
-    /* =====================================================================
-       PART 2. Loading the Neurotorium atlas
-       ===================================================================== */
-
     async function loadAtlas() {
       const draco = new DRACOLoader().setDecoderPath(import.meta.resolve('three/addons/libs/draco/gltf/'));
-      draco.preload(); // fetch the decoder while the model files download
+      draco.preload();
       const loader = new GLTFLoader().setDRACOLoader(draco);
       const textures = new THREE.TextureLoader();
       const [matcap, highlight, ...files] = await Promise.all([
@@ -2354,8 +2164,7 @@
         ...ATLAS.parts.map((part) => loader.loadAsync(window.wersja(`${ATLAS.models}${part.code}.glb`))),
       ]);
       draco.dispose();
-      // Like the Neurotorium atlas, read the matcap colours as linear light. The
-      // display conversion then lifts them, which gives the soft, creamy look.
+
       matcap.colorSpace = THREE.LinearSRGBColorSpace;
       highlight.colorSpace = THREE.LinearSRGBColorSpace;
       shading.uHighlightMatcap.value = highlight;
@@ -2394,7 +2203,7 @@
           mesh.geometry.setAttribute('aOcclusion', new THREE.BufferAttribute(new Float32Array(count).fill(1), 1));
           mesh.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3).fill(1), 3));
           mesh.material = part.inner ? (part.overlay ? overlay : inner) : shell;
-          mesh.renderOrder = 0; // outer parts get their order in addSeeThroughPasses
+          mesh.renderOrder = 0;
           (part.inner ? innerMeshes : outerMeshes).push(mesh);
         });
         if (!part.inner) outerBox.union(box);
@@ -2409,7 +2218,6 @@
         model.add(root);
       });
 
-      // Centre on the outer brain and scale it to the shared size.
       const center = outerBox.getCenter(new THREE.Vector3());
       let radius = 0;
       for (const mesh of outerMeshes) {
@@ -2428,20 +2236,11 @@
       return brain;
     }
 
-    /* =====================================================================
-       PART 3. The generated brain (fallback)
-       Used when the atlas files can't be loaded, for example when the page is
-       opened straight from disk. Every part starts as a simple mesh that is
-       reshaped in code. Axes: +y is up, +z is the front, x runs left to right.
-       ===================================================================== */
-
-    // Height across a fold: 0 at the bottom of a groove, rising to a rounded ridge.
     const ridge = (distance, halfWidth) => {
       const u = clamp(distance / halfWidth, 0, 1);
       return Math.sqrt(u * (2 - u));
     };
 
-    // Seeded noise, so the folds come out the same on every visit.
     function seededRandom(seed) {
       return function random() {
         seed = (seed + 0x6d2b79f5) | 0;
@@ -2458,7 +2257,7 @@
       const sphere = new THREE.IcosahedronGeometry(1, detail);
       sphere.deleteAttribute('normal');
       sphere.deleteAttribute('uv');
-      return mergeVertices(sphere); // share vertices so normals come out smooth
+      return mergeVertices(sphere);
     }
 
     function distanceToPolyline(px, py, points) {
@@ -2476,7 +2275,6 @@
       return Math.sqrt(best);
     }
 
-    // Linear interpolation through [x, y] points sorted by x.
     function piecewise(x, points) {
       if (x <= points[0][0]) return points[0][1];
       for (let i = 1; i < points.length; i++) {
@@ -2489,9 +2287,6 @@
       return points[points.length - 1][1];
     }
 
-    // Length of the surface gradient of a per-vertex value, averaged over the
-    // triangles around each vertex. Dividing a value by it gives the distance
-    // to where the value crosses zero, so grooves come out evenly wide.
     function surfaceSlope(geometry, values) {
       const pos = geometry.attributes.position.array;
       const index = geometry.index.array;
@@ -2516,7 +2311,7 @@
         const nz = e1x * e2y - e1y * e2x;
         const nn = nx * nx + ny * ny + nz * nz;
         if (nn < 1e-20) continue;
-        // gradient = (d1 * (e2 x N) + d2 * (N x e1)) / |N|^2
+
         const d1 = (values[b] - values[a]) / nn;
         const d2 = (values[c] - values[a]) / nn;
         const area = Math.sqrt(nn);
@@ -2533,11 +2328,6 @@
       return slope;
     }
 
-    // Sculpting in three passes:
-    //   shape(p)      moves each vertex to form the smooth outline;
-    //   field(p, n)   optional value whose zero lines become grooves;
-    //   surface(...)  turns the distance to the nearest groove into depth,
-    //                 shading, colour and region. Depth pushes inwards.
     function sculpt(geometry, { shape, field, surface }) {
       const position = geometry.attributes.position;
       const count = position.count;
@@ -2584,33 +2374,27 @@
       return geometry;
     }
 
-    // --- Cerebral hemispheres ------------------------------------------------
-
     const HEMI = { length: 0.86, top: 0.6, bottom: 0.44, lateral: 0.6, medial: 0.07, gap: 0.016 };
 
-    // Landmark grooves on the side of the brain, as [front-back (z), up-down (y)].
     const SULCI = {
-      lateral: [[0.47, -0.22], [0.3, -0.15], [0.1, -0.07], [-0.12, -0.02], [-0.28, 0.04], [-0.37, 0.15]], // Sylvian fissure
+      lateral: [[0.47, -0.22], [0.3, -0.15], [0.1, -0.07], [-0.12, -0.02], [-0.28, 0.04], [-0.37, 0.15]],
       central: [[-0.08, 0.75], [-0.04, 0.52], [0.04, 0.36], [0.07, 0.24], [0.12, 0.12], [0.14, 0.03]],
       superiorTemporal: [[0.36, -0.33], [0.16, -0.23], [-0.08, -0.15], [-0.34, -0.06]],
     };
 
-    // Region borders: the lateral fissure (extended backwards) and the central sulcus.
-    const TEMPORAL_TOP = [[-0.9, 0.08], [-0.28, 0.04], [-0.12, -0.02], [0.1, -0.07], [0.3, -0.15], [0.47, -0.22]]; // [z, y]
-    const CENTRAL_BY_HEIGHT = [[-0.4, 0.3], ...SULCI.central.map(([z, y]) => [y, z]).reverse()];                // [y, z]
+    const TEMPORAL_TOP = [[-0.9, 0.08], [-0.28, 0.04], [-0.12, -0.02], [0.1, -0.07], [0.3, -0.15], [0.47, -0.22]];
+    const CENTRAL_BY_HEIGHT = [[-0.4, 0.3], ...SULCI.central.map(([z, y]) => [y, z]).reverse()];
 
     function corticalRegionAt(z, y, lateral) {
-      if (z < -0.47 - 0.12 * (y + 0.2)) return REGION_ID.visual; // occipital lobe, home of the visual cortex
+      if (z < -0.47 - 0.12 * (y + 0.2)) return REGION_ID.visual;
       if (z < 0.47 && y < piecewise(z, TEMPORAL_TOP) && (z < 0.18 || lateral > 0.3)) return REGION_ID.temporal;
       const central = piecewise(y, CENTRAL_BY_HEIGHT);
       if (z < central) return REGION_ID.parietal;
-      if (z < central + 0.1) return REGION_ID.motor; // precentral gyrus
+      if (z < central + 0.1) return REGION_ID.motor;
       if (z < central + 0.24) return REGION_ID.premotor;
       return REGION_ID['prefrontal-lateral'];
     }
 
-    // Smooth hemisphere: a superellipsoid, flat on the inner (medial) side,
-    // deepest under the temporal lobe and narrower towards both poles.
     function hemisphereShape(v) {
       const { x: dx, y: dy, z: dz } = v;
       const outer = dx >= 0;
@@ -2640,15 +2424,13 @@
     }
 
     function buildHemisphere(side, detail) {
-      const seed = side > 0 ? 0 : 41.7; // each half gets its own fold pattern
+      const seed = side > 0 ? 0 : 41.7;
       const geometry = unitSphere(detail);
       const wobble = new Float32Array(geometry.attributes.position.count * 2);
 
       sculpt(geometry, {
         shape: hemisphereShape,
 
-        // Folds: the zero lines of domain-warped noise wind around like sulci.
-        // The noise is stretched front to back, like the frontal and temporal gyri.
         field(p, n, i) {
           const f = 5.4;
           let qx = (p.x + seed) * f;
@@ -2667,12 +2449,12 @@
 
         surface(p, n, foldDistance, out, i) {
           const { x, y, z } = p;
-          // Bend the landmark lines and region borders so they are not ruler-straight.
+
           const wz = z + 0.03 * wobble[i * 2];
           const wy = y + 0.03 * wobble[i * 2 + 1];
           const lateral = clamp((x - HEMI.gap / 2) / (HEMI.medial + HEMI.lateral), 0, 1);
-          const onSide = smoothstep(0.1, 0.5, n.x);   // outer surface
-          const notInner = smoothstep(-0.45, 0, n.x); // outer surface and top
+          const onSide = smoothstep(0.1, 0.5, n.x);
+          const notInner = smoothstep(-0.45, 0, n.x);
 
           out.depth = Math.max(
             0.036 * (1 - ridge(foldDistance, 0.05)),
@@ -2680,7 +2462,7 @@
             0.048 * notInner * (1 - ridge(distanceToPolyline(wz, wy, SULCI.central), 0.045)),
             0.036 * onSide * (1 - ridge(distanceToPolyline(wz, wy, SULCI.superiorTemporal), 0.045)),
           );
-          // Darken the creases and the inner wall that faces the other hemisphere.
+
           const crease = Math.min(out.depth / 0.036, 1);
           out.occlusion = (1 - 0.7 * Math.pow(crease, 1.6)) * lerp(1, 0.5, smoothstep(-0.5, -0.95, n.x));
           out.region = corticalRegionAt(wz, wy, lateral);
@@ -2695,7 +2477,7 @@
     function mirrorX(geometry) {
       const position = geometry.attributes.position;
       for (let i = 0; i < position.count; i++) position.setX(i, -position.getX(i));
-      const index = geometry.index; // flip triangle winding so faces still point outwards
+      const index = geometry.index;
       for (let i = 0; i < index.count; i += 3) {
         const b = index.getX(i + 1);
         index.setX(i + 1, index.getX(i + 2));
@@ -2703,8 +2485,6 @@
       }
       geometry.computeVertexNormals();
     }
-
-    // --- Cerebellum -----------------------------------------------------------
 
     function buildCerebellum(detail) {
       const center = new THREE.Vector3(0, -0.43, -0.5);
@@ -2714,14 +2494,13 @@
           const { x: dx, y: dy, z: dz } = v;
           let y = dy * 0.24;
           let z = dz * 0.31;
-          if (y > 0) y *= 0.72; // flat top, tucked under the occipital lobes
+          if (y > 0) y *= 0.72;
           const midline = Math.exp(-(dx * dx) / 0.03);
-          z += midline * 0.06 * smoothstep(0.2, -0.8, dz); // notch between the two halves at the back
-          y += midline * 0.04 * smoothstep(0.2, -0.8, dy); // and underneath
+          z += midline * 0.06 * smoothstep(0.2, -0.8, dz);
+          y += midline * 0.04 * smoothstep(0.2, -0.8, dy);
           v.set(dx * 0.5, y, z).add(center);
         },
 
-        // Folia: fine grooves running across the cerebellum, curving down at its sides.
         field(p) {
           const lx = p.x;
           const ly = p.y - center.y;
@@ -2739,10 +2518,8 @@
       });
     }
 
-    // --- Brainstem ------------------------------------------------------------
-
     function buildBrainstem() {
-      // Outline from the top of the spinal cord up to the midbrain, as [radius, height].
+
       const outline = new THREE.SplineCurve([
         [0, -0.74], [0.06, -0.72], [0.072, -0.6], [0.09, -0.5], [0.112, -0.42],
         [0.15, -0.32], [0.158, -0.2], [0.125, -0.09], [0.125, 0.04], [0.09, 0.12], [0, 0.14],
@@ -2757,8 +2534,8 @@
       return sculpt(geometry, {
         shape(v) {
           const pons = Math.exp(-((v.y + 0.25) ** 2) / 0.01);
-          v.z *= lerp(0.82, 1 + 0.5 * pons, smoothstep(-0.05, 0.05, v.z)); // the pons bulges forward
-          v.applyAxisAngle(xAxis, 0.3); // the stem leans back as it descends
+          v.z *= lerp(0.82, 1 + 0.5 * pons, smoothstep(-0.05, 0.05, v.z));
+          v.applyAxisAngle(xAxis, 0.3);
           v.y -= 0.2;
           v.z -= 0.02;
         },
@@ -2771,8 +2548,6 @@
         },
       });
     }
-
-    // --- Structures deep inside (visible when the cortex turns see-through) ---
 
     function solidSurface(region, color) {
       return (p, n, distance, out) => {
@@ -2790,7 +2565,6 @@
       });
     }
 
-    // A tube along a curve; `profile(t)` scales the radius from start (0) to end (1).
     function buildTube(points, radius, profile, region, color) {
       const curve = new THREE.CatmullRomCurve3(points);
       const segments = 48;
@@ -2826,7 +2600,7 @@
           [at(0.215, -0.265, 0.24), at(0.235, -0.255, 0.12), at(0.24, -0.225, -0.02), at(0.215, -0.16, -0.15), at(0.165, -0.08, -0.22)],
           0.042, (t) => Math.pow(Math.sin(Math.PI * t), 0.45) * lerp(1, 0.45, t), REGION_ID.hippocampus, WHITE,
         ));
-        // Default mode network hubs: medial prefrontal cortex and posterior cingulate cortex
+
         parts.push(buildEllipsoid(at(0.045, 0.14, 0.53), size(0.035, 0.07, 0.065), REGION_ID['prefrontal-medial'], WHITE));
         parts.push(buildEllipsoid(at(0.045, 0.17, -0.3), size(0.035, 0.06, 0.06), REGION_ID.pcc, WHITE));
       }
@@ -2834,7 +2608,6 @@
       return mergeGeometries(parts);
     }
 
-    // Builds the parts one at a time, pausing in between so the page stays responsive.
     async function createGeneratedBrain(detail) {
       const { matcap, highlight } = fallbackMatcaps();
       shading.uHighlightMatcap.value = highlight;
@@ -2857,18 +2630,12 @@
         brain.add(mesh);
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
-      brain.position.y = 0.135; // put the middle of the whole model on the rotation axis
+      brain.position.y = 0.135;
       const walls = createRegionMaterial(matcap, { wallsOnly: true });
       const seeThroughMeshes = addSeeThroughPasses(outerMeshes, walls, createDepthOnlyMaterial());
       brain.userData = { regions: new Set(REGIONS), shellMaterials: [shell], innerMeshes, seeThroughMeshes };
       return brain;
     }
-
-    /* =====================================================================
-       PART 4. Scene
-       One render pass straight to the canvas, with the browser's antialiasing.
-       Film grain is added in the shader (PART 1) and on the page background.
-       ===================================================================== */
 
     const visual = document.getElementById('brainVisual');
     const canvas = document.getElementById('brainCanvas');
@@ -2882,8 +2649,7 @@
 
     let renderer = null;
     try {
-      // Drawn straight to a transparent canvas, so the page background (paper,
-      // grain and a soft light behind the brain) shows through.
+
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     } catch (error) {
       visual.classList.add('is-unsupported');
@@ -2892,29 +2658,22 @@
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
-    const pivot = new THREE.Group(); // the scroll rotates this
+    const pivot = new THREE.Group();
     scene.add(pivot);
     let brain = null;
 
     if (renderer) {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 0);
-      // Filmic tone mapping, as in the Neurotorium atlas: softer, less saturated colours.
+
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1;
     }
 
-    /* =====================================================================
-       PART 5. Scroll drives the model and the timeline
-       Each .step is a keyframe. The scroll position becomes a continuous
-       step index (2.5 = halfway between the third and fourth step); the
-       rotation, colours and time of day are interpolated from it.
-       ===================================================================== */
-
     const regionColors = Object.fromEntries(
       [...REGIONS, ...Object.keys(GROUPS)].map((name) => [name, new THREE.Color(cssVar(`--c-${name}`))]),
     );
-    const SPIN_OUTSIDE = THREE.MathUtils.degToRad(35); // keeps turning before the first and after the last step
+    const SPIN_OUTSIDE = THREE.MathUtils.degToRad(35);
     let keyframes = [];
     let spinDirection = -1;
 
@@ -2943,24 +2702,22 @@
           for (const member of members) {
             const id = REGION_ID[member];
             weights[id] = Math.max(weights[id], strength);
-            if (GROUPS[name]) colors[id] = regionColors[name]; // a group is drawn in one colour
+            if (GROUPS[name]) colors[id] = regionColors[name];
             if (DEEP.has(member)) deep = true;
           }
         }
 
-        // With the cortex solid, a weaker highlight keeps the full shape and turns
-        // paler instead, so the same structure at two strengths reads as one shape.
         if (!deep) {
           weights.forEach((weight, id) => {
             if (weight <= 0 || weight >= 1) return;
-            // mixed in sRGB, like color-mix() on the highlighted word
+
             colors[id] = colors[id].clone().convertLinearToSRGB().lerp(WHITE, 1 - weight).convertSRGBToLinear();
             weights[id] = 1;
           });
         }
 
         let time = parseTime(step.dataset.time ?? '0');
-        while (time < previousTime) time += 24; // after midnight: keep counting up through the night
+        while (time < previousTime) time += 24;
         previousTime = time;
 
         return {
@@ -2984,11 +2741,10 @@
       const rect = element.getBoundingClientRect();
       return rect.top + window.scrollY + rect.height / 2;
     };
-    // The title look lasts through the test screen, so the move starts from there:
-    // from where the test's pinned card lets go (its last screen in the middle).
+
     const quiz = document.querySelector('.quiz');
     const wstep = document.querySelector('.wstep');
-    let wstepTop = null; // page position of the introduction (s2)
+    let wstepTop = null;
     function measureSteps() {
       stepCenters = steps.map(pageCenter);
       wstepTop = wstep ? wstep.getBoundingClientRect().top + window.scrollY : null;
@@ -2999,7 +2755,6 @@
       }
     }
 
-    // 0 up to the test screen in the middle of the screen, 1 once the first step is.
     function introProgress() {
       if (introCenter === null || !stepCenters.length) return 1;
       const anchor = window.scrollY + window.innerHeight / 2;
@@ -3048,20 +2803,19 @@
       const t = index - i;
       const a = keyframes[i];
       const b = keyframes[i + 1];
-      const move = smoothstep(0, 1, t);     // the model eases in and out of each view
-      const fade = smoothstep(0.3, 0.7, t); // colours switch around the halfway point
+      const move = smoothstep(0, 1, t);
+      const fade = smoothstep(0.3, 0.7, t);
       out.yaw = lerp(a.yaw, b.yaw, move);
       out.pitch = lerp(a.pitch, b.pitch, move);
       out.zoom = lerp(a.zoom, b.zoom, move);
       out.focus = lerp(a.focus, b.focus, fade);
       out.ghost = lerp(a.ghost, b.ghost, fade);
       out.wash = lerp(a.wash, b.wash, fade);
-      out.time = lerp(a.time, b.time, t);   // the timeline runs steadily with the scroll
+      out.time = lerp(a.time, b.time, t);
       out.current = fade < 0.5 ? i : i + 1;
       for (let r = 0; r < N; r++) {
         out.weights[r] = lerp(a.weights[r], b.weights[r], fade);
-        // A region lit in only one of the two steps keeps that step's colour;
-        // a region lit in both (e.g. DMN hubs, then the whole cortex) blends between them.
+
         const from = a.weights[r] > 0 ? a.colors[r] : b.colors[r];
         const to = b.weights[r] > 0 ? b.colors[r] : a.colors[r];
         out.colors[r].lerpColors(from, to, fade);
@@ -3069,14 +2823,12 @@
       return out;
     }
 
-    // --- Timeline: a clock running through the day --------------------------------
-
     const timelineTime = timeline.querySelector('.timeline__time');
     const timelineMinute = timeline.querySelector('.timeline__minute');
     const timelineHour = timeline.querySelector('.timeline__hour');
 
     let shownMinute = -1;
-    // The clock's sticker takes the colour of the sky at that hour: [hour, --sky-* colour].
+
     const SKY = [[0, 'night'], [4.5, 'night'], [6, 'dawn'], [8, 'day'], [17, 'day'], [19, 'dusk'], [20.5, 'night'], [24, 'night']]
       .map(([hour, name]) => [hour, new THREE.Color(cssVar(`--sky-${name}`))]);
     const skyColor = new THREE.Color();
@@ -3089,10 +2841,10 @@
 
     function updateTimeline(hours) {
       const clock = ((hours % 24) + 24) % 24;
-      // The hands sweep smoothly; the time beside them goes in 5-minute steps.
+
       timelineMinute.setAttribute('transform', `rotate(${((clock % 1) * 360).toFixed(1)})`);
       timelineHour.setAttribute('transform', `rotate(${((clock % 12) * 30).toFixed(1)})`);
-      const minute = (Math.round(clock * 12) * 5) % 1440; // shown in 5-minute steps
+      const minute = (Math.round(clock * 12) * 5) % 1440;
       if (minute !== shownMinute) {
         shownMinute = minute;
         timelineTime.textContent = `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
@@ -3100,8 +2852,6 @@
       }
     }
 
-    // Highlighted words in the text take the colour of their structure on the model,
-    // paler when the step gives that structure a strength below 1.
     document.querySelectorAll('.step-text mark[data-token]').forEach((mark) => {
       const token = (mark.closest('.step')?.dataset.highlight || '').split(/\s+/)
         .map((entry) => entry.split(':'))
@@ -3112,11 +2862,6 @@
         : `var(--c-${mark.dataset.token})`);
     });
 
-    // --- Layout and render loop -------------------------------------------------
-
-    // Two framings of the model. Story: in the free space below the timeline,
-    // right of the cards on wide screens and in the upper part of the screen on
-    // phones. Title: in the middle of the screen, behind the title.
     const views = { story: { x: 0, y: 0, distance: 4 }, title: { x: 0, y: 0, distance: 4 } };
     let baseDistance = 4;
     let canvasSize = '';
@@ -3128,8 +2873,7 @@
       const width = visual.clientWidth;
       const height = visual.clientHeight;
       if (!renderer || !width || !height) return;
-      // Phones fire resize events while the address bar slides; resizing the
-      // canvas to the same size would still clear and reallocate it.
+
       if (canvasSize !== `${width}x${height}`) {
         canvasSize = `${width}x${height}`;
         renderer.setSize(width, height, false);
@@ -3162,38 +2906,32 @@
       needsRender = true;
     }
 
-    // Moves the camera between the title framing (0) and the story framing (1).
     function applyView(t) {
       if (t === shownView) return;
       shownView = t;
-      // The title background fades out first, then the timeline fades in.
+
       visual.parentElement.style.setProperty('--title-o', (1 - smoothstep(0.1, 0.7, t)).toFixed(3));
       overlay.style.setProperty('--head-o', smoothstep(0.55, 1, t).toFixed(3));
-      if (!viewWidth) return; // no 3D: only the backgrounds follow the scroll
+      if (!viewWidth) return;
       const x = lerp(views.title.x, views.story.x, t);
       const y = lerp(views.title.y, views.story.y, t);
       camera.setViewOffset(viewWidth, viewHeight, viewWidth / 2 - x, viewHeight / 2 - y, viewWidth, viewHeight);
       camera.updateProjectionMatrix();
       baseDistance = lerp(views.title.distance, views.story.distance, t);
-      // Centre of the soft light behind the brain (shared with the timeline header).
+
       visual.parentElement.style.setProperty('--brain-x', `${x.toFixed(1)}px`);
       visual.parentElement.style.setProperty('--brain-y', `${y.toFixed(1)}px`);
     }
 
-    // On the title screen the brain turns by itself; scrolling slows it down and
-    // it lands, the short way round, on the first step's view.
-    const TITLE_SPIN = 0.25; // radians per second, a turn in about 25 s
-    // When the brain first appears it spins up fast and slows down to TITLE_SPIN:
-    // SPIN_BOOST times faster at the start, the extra fading over SPIN_SETTLE seconds.
+    const TITLE_SPIN = 0.25;
+
     const SPIN_BOOST = 9;
     const SPIN_SETTLE = 1.6;
     let titleSpin = 0;
-    let spinBorn = 0; // when the brain was first drawn, in ms
-    const BRAIN_DIM = 0.8; // how much fainter the brain is behind s2 and s3 (0.8 leaves a fifth)
+    let spinBorn = 0;
+    const BRAIN_DIM = 0.8;
     let shownBrainOpacity = 1;
 
-    // How the brain looks on the title screen comes from the theme in CSS
-    // (the --s1-* brain variables in :root). Re-read on 's1:theme'.
     const titleLook = { spark: 0, whiten: 0, tint: 0, crease: 0, ghost: 1 };
     function readTitleLook() {
       const number = (name, fallback) => {
@@ -3240,9 +2978,9 @@
       lastTime = now;
       if (!onScreen && !needsRender) return;
 
-      sample(Math.max(scrollIndex(), 0), target); // before the first step the title screen takes over
+      sample(Math.max(scrollIndex(), 0), target);
       target.intro = introProgress();
-      const k = reduceMotion ? 1 : 1 - Math.exp(-dt * 6); // smoothing towards the scroll target
+      const k = reduceMotion ? 1 : 1 - Math.exp(-dt * 6);
       let change = 0;
       for (const key of ['yaw', 'pitch', 'zoom', 'focus', 'ghost', 'wash', 'intro']) change += approach(state, key, target[key], k);
 
@@ -3251,11 +2989,10 @@
       if (brain && !spinBorn) spinBorn = now;
       const boost = spinBorn ? 1 + SPIN_BOOST * Math.exp(-(now - spinBorn) / 1000 / SPIN_SETTLE) : 1;
       if (spinning) titleSpin += spinDirection * TITLE_SPIN * boost * dt * (1 - landing);
-      // Wrap only while fully on the title screen, where a whole turn is invisible.
+
       if (landing === 0) titleSpin = wrapAngle(titleSpin);
       applyView(landing);
-      // Behind the introduction and the test (s2, s3) the brain is much fainter:
-      // it dims as s2 comes up and brightens again as it lands on the first step.
+
       const dim = wstepTop === null ? 0 : smoothstep(wstepTop - window.innerHeight, wstepTop - window.innerHeight * 0.4, window.scrollY);
       const brainOpacity = 1 - BRAIN_DIM * dim * (1 - landing);
       if (Math.abs(brainOpacity - shownBrainOpacity) > 0.004) {
@@ -3278,8 +3015,7 @@
       pivot.rotation.set(state.pitch + parallax.y * 0.06, state.yaw + titleSpin * (1 - landing) + parallax.x * 0.12, 0);
       camera.position.set(0, 0, baseDistance / state.zoom);
       shading.uFocus.value = state.focus;
-      // On the title screen the cortex is see-through as in the later steps
-      // (or as --s1-ghost sets); it turns solid as the brain lands on the first step.
+
       const ghost = lerp(titleLook.ghost, state.ghost, landing);
       shading.uGhost.value = ghost;
       shading.uSpark.value = titleLook.spark * (1 - landing);
@@ -3292,7 +3028,7 @@
         shading.uRegionWeights.value[r] = state.weights[r];
         shading.uRegionColors.value[r].copy(target.colors[r]);
       }
-      // See-through cortex: the extra passes keep it a single surface (see addSeeThroughPasses).
+
       const seeThrough = ghost > 0.01;
       for (const material of brain.userData.shellMaterials) material.depthWrite = !seeThrough;
       for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = seeThrough;
@@ -3307,7 +3043,7 @@
       measureSteps();
       state.intro = introProgress();
       layout();
-      sample(Math.max(scrollIndex(), 0), state); // start at the current scroll position, no swoop
+      sample(Math.max(scrollIndex(), 0), state);
       updateTimeline(state.time);
       requestAnimationFrame(tick);
     }
@@ -3318,8 +3054,7 @@
     }, { rootMargin: '25% 0px' }).observe(visual.parentElement);
     new ResizeObserver(layout).observe(visual);
     new ResizeObserver(measureSteps).observe(stepsContainer);
-    // On the last step the clock header no longer stays pinned while the text slides
-    // under it: once the text reaches the header, the header moves up with it.
+
     const timelineHead = document.querySelector('.timeline-head');
     const lastText = steps.at(-1)?.querySelector('.step-text');
     let headShift = null;
@@ -3341,7 +3076,7 @@
     window.addEventListener('screen:resize', layout);
     window.addEventListener('banner:toggle', layout);
     document.fonts?.ready.then(layout);
-    // Until the model is ready the render loop isn't running; keep the timeline in step with the scroll.
+
     window.addEventListener('scroll', () => {
       if (!keyframes.length) applyView(smoothstep(0, 1, introProgress()));
     }, { passive: true });
@@ -3357,13 +3092,13 @@
           }
         }
         if (!brain) {
-          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))); // let the intro paint first
+          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
           brain = await createGeneratedBrain(window.matchMedia('(max-width: 760px)').matches ? 72 : 100);
         }
         pivot.add(brain);
         performance.measure('brain-build', 'brain-build-start');
         start(brain.userData.regions);
-        // Compile every shader now, including the see-through passes, so the first fade doesn't stall.
+
         for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = true;
         renderer.compile(scene, camera);
         for (const mesh of brain.userData.seeThroughMeshes) mesh.visible = false;
@@ -3372,9 +3107,9 @@
         window.mozgGotowy?.();
       })();
     } else {
-      start(new Set(REGIONS)); // no 3D, but the timeline still follows the text
+      start(new Set(REGIONS));
       window.mozgGotowy?.();
     }
-  </script>
+</script>
 </body>
 </html>
