@@ -3,7 +3,7 @@ An Onet special project: a 3D brain built from the Neurotorium atlas models, fol
 
 | Folder | Contents |
 |---|---|
-| `models/neurotorium/` | 27 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
+| `models/neurotorium/` | 28 structure models from the Neurotorium atlas, Draco-compressed, named by Neurotorium's structure code |
 | `textures/matcaps/` | The two matcap images the Neurotorium atlas uses |
 | `assets/` | Logos, the author's photo and the food photos for the infographics (`.webp`) |
 
@@ -40,7 +40,7 @@ The list of parts is `ATLAS.parts` in the script. Each entry names a file, the h
 
 - **Adding a structure.** Neurotorium serves every structure at `https://neurotorium.org/wp-content/themes/neurotorium/brain_atlas/models/<code>.glb`. The codes and names are in their `data.json`. Download the file, compress it with `npx @gltf-transform/cli draco in.glb out.glb`, save it under `models/neurotorium/`, add an entry to `ATLAS.parts`, and add its code to the preload list in the `<head>`.
 
-Compression shrank the 27 files from about 4 MB to 552 KB. The geometry is unchanged apart from tiny rounding.
+Compression shrank the 28 files from about 4 MB to 568 KB. The geometry is unchanged apart from tiny rounding.
 
 ## How it works
 
