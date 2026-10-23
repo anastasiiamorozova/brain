@@ -1119,7 +1119,7 @@
           </div>
         </section>
 
-        <section class="step" data-time="07:00" data-highlight="scn hypothalamus" data-yaw="-48" data-pitch="-8" data-zoom="1.25">
+        <section class="step" data-time="07:00" data-highlight="scn hypothalamus" data-yaw="0" data-pitch="-12" data-zoom="1.6">
           <div class="step-text">
             <p><mark data-token="scn">Jądro nadskrzyżowaniowe</mark> to główny biologiczny zegar organizmu zlokalizowany w <mark data-token="hypothalamus">podwzgórzu</mark>. Jego neurony są najaktywniejsze w ciągu dnia. Poranne światło docierające przez siatkówkę każdego dnia nastawia ten zegar, hamuje wydzielanie melatoniny i przygotowuje organizm do aktywności.</p>
           </div>
@@ -1183,7 +1183,7 @@
           </div>
         </section>
 
-        <section class="step" data-time="06:00" data-highlight="scn hypothalamus" data-yaw="-408" data-pitch="-8" data-zoom="1.25">
+        <section class="step" data-time="06:00" data-highlight="scn hypothalamus" data-yaw="-360" data-pitch="-12" data-zoom="1.6">
           <div class="step-text">
             <p>O świcie światło znów dociera do siatkówki, <mark data-token="scn">jądro nadskrzyżowaniowe</mark> hamuje wydzielanie melatoniny i zaczyna się kolejna doba.</p>
           </div>
@@ -1885,7 +1885,7 @@
 
         { code: '1.1.3.1.0', name: 'Primary visual cortex', region: 'visual', inner: true, overlay: true },
         { code: '3.2.0.0.0', name: 'Hypothalamus', region: 'hypothalamus', inner: true },
-        { code: '3.2.4.0.0', name: 'Suprachiasmatic nucleus', region: 'scn', inner: true, marker: 0.28 },
+        { code: '3.2.4.0.0', name: 'Suprachiasmatic nucleus', region: 'scn', inner: true, marker: 0.2, pair: 0.36 },
         { code: '3.1.1.0.0', name: 'Pineal gland', region: 'pineal', inner: true },
         { code: '1.1.10.0.0', name: 'Nucleus accumbens', region: 'accumbens', inner: true },
         { code: '1.1.4.3.3', name: 'Hippocampus proper', region: 'hippocampus', inner: true },
@@ -2208,12 +2208,16 @@
         });
         if (!part.inner) outerBox.union(box);
         if (part.marker) {
-          const dot = new THREE.Mesh(
-            buildEllipsoid(box.getCenter(new THREE.Vector3()), new THREE.Vector3().setScalar(part.marker), REGION_ID[part.region], new THREE.Color(1, 1, 1)),
-            inner,
-          );
-          innerMeshes.push(dot);
-          model.add(dot);
+          const center = box.getCenter(new THREE.Vector3());
+          for (const x of part.pair ? [-part.pair, part.pair] : [0]) {
+            const dot = new THREE.Mesh(
+              buildEllipsoid(center.clone().setX(center.x + x), new THREE.Vector3().setScalar(part.marker), REGION_ID[part.region], new THREE.Color(1, 1, 1)),
+              inner,
+            );
+            innerMeshes.push(dot);
+            model.add(dot);
+          }
+          return;
         }
         model.add(root);
       });
@@ -2593,7 +2597,7 @@
       for (const side of [1, -1]) {
         const at = (x, y, z) => new THREE.Vector3(x * side, y, z);
         const size = (x, y, z) => new THREE.Vector3(x, y, z);
-        parts.push(buildEllipsoid(at(0.022, -0.215, 0.15), size(0.03, 0.03, 0.03), REGION_ID.scn, WHITE));
+        parts.push(buildEllipsoid(at(0.034, -0.215, 0.15), size(0.022, 0.022, 0.022), REGION_ID.scn, WHITE));
         parts.push(buildEllipsoid(at(0.08, -0.115, 0.27), size(0.035, 0.03, 0.045), REGION_ID.accumbens, WHITE));
         parts.push(buildEllipsoid(at(0.215, -0.255, 0.3), size(0.042, 0.038, 0.048), REGION_ID.amygdala, WHITE));
         parts.push(buildTube(
