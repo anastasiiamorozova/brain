@@ -23,7 +23,7 @@ Each `<section class="step">` is one card and one keyframe.
 | Attribute | Effect |
 |---|---|
 | `data-time` | Time of day when the card is centred, as `HH:MM`. The clock runs through 24 hours from the first card's time. Times after midnight continue the same night. |
-| `data-highlight` | What lights up, separated by spaces. Add a strength after a colon, for example `prefrontal:0.55`. The structure keeps its full shape in a paler colour, and its word in the text turns paler too. In steps where the cortex turns see-through, a strength makes the structure fainter instead. |
+| `data-highlight` | What lights up, separated by spaces. Add a strength after a colon, for example `prefrontal:0.55`. The structure keeps its full shape in a paler colour, and its word in the text turns paler too. In steps where the cortex turns see-through, a strength makes the structure fainter instead. `neocortex:mist` draws the structure as a thin coloured haze on the outer surface, strongest along the outline, and makes the cortex see-through. |
 | `data-yaw` | Turn in degrees; 0 means the face points at the reader. Keep values going one way for a continuous turn. |
 | `data-pitch` | Tilt in degrees. Positive shows the top, negative the underside. |
 | `data-zoom` | 1 fits the screen; 1.2 is 20% closer. |

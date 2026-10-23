@@ -1165,7 +1165,7 @@
           </div>
         </section>
 
-        <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:0.35" data-yaw="-225" data-pitch="8" data-zoom="1.08">
+        <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:mist" data-yaw="-225" data-pitch="8" data-zoom="1.08">
           <div class="step-text">
             <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w korze nowej. To tzw. konsolidacja pamięci.</p>
           </div>
@@ -1940,6 +1940,7 @@
 
     const shading = {
       uRegionWeights: { value: REGIONS.map(() => 0) },
+      uRegionMist: { value: REGIONS.map(() => 0) },
       uRegionColors: { value: REGIONS.map(() => new THREE.Color()) },
       uRegionWall: { value: REGIONS.map((name) => (WALLS.has(name) ? 1 : 0)) },
       uHighlightMatcap: { value: null },
@@ -1975,10 +1976,12 @@
             attribute float aRegion;
             attribute float aOcclusion;
             uniform float uRegionWeights[${N}];
+            uniform float uRegionMist[${N}];
             uniform vec3 uRegionColors[${N}];
             uniform float uRegionWall[${N}];
             uniform mat4 uBrainInverse;
             varying float vRegionWeight;
+            varying float vRegionMist;
             varying vec3 vRegionColor;
             varying float vRegionWall;
             varying float vOcclusion;
@@ -1989,6 +1992,7 @@
               int slot = clamp(region, 0, ${N - 1});
               float known = region == slot ? 1.0 : 0.0;
               vRegionWeight = uRegionWeights[slot] * known;
+              vRegionMist = uRegionMist[slot] * known;
               vRegionWall = uRegionWall[slot] * known;
               vRegionColor = uRegionColors[slot];
               vOcclusion = aOcclusion;
@@ -2010,6 +2014,7 @@
             uniform float uTime;
             uniform float uGrain;
             varying float vRegionWeight;
+            varying float vRegionMist;
             varying vec3 vRegionColor;
             varying float vRegionWall;
             varying float vOcclusion;
@@ -2070,7 +2075,11 @@
                 if (diffuseColor.a < 0.01) discard;
               #else
                 float facing = abs(dot(normalize(normal), normalize(vViewPosition)));
+                float rim = pow(1.0 - facing, 1.5);
+                float mist = vRegionMist * uGhost * (0.3 + 0.7 * rim);
+                outgoingLight = mix(outgoingLight, vRegionColor * (0.6 + 0.6 * shade.r), mist);
                 float seeThrough = mix(0.05 + 0.45 * pow(1.0 - facing, 2.0), 0.92, vRegionWeight);
+                seeThrough = max(seeThrough, vRegionMist * (0.12 + 0.45 * rim));
                 diffuseColor.a *= mix(1.0, seeThrough, uGhost);
                 diffuseColor.a = max(diffuseColor.a, 0.32 * abs(uWhiten) * uGhost);
                 if (uSpark > 0.0) {
@@ -2691,13 +2700,14 @@
       let previousTime = -Infinity;
       keyframes = steps.map((step) => {
         const weights = REGIONS.map(() => 0);
+        const mist = REGIONS.map(() => 0);
         const colors = REGIONS.map((name) => regionColors[name]);
         let wash = 0;
         let deep = false;
 
         for (const token of (step.dataset.highlight || '').split(/\s+/).filter(Boolean)) {
           const [name, value] = token.split(':');
-          const strength = value === undefined ? 1 : clamp(Number(value), 0, 1);
+          const strength = value === undefined || value === 'mist' ? 1 : clamp(Number(value), 0, 1);
           if (name === 'glymphatic') {
             wash = strength;
             continue;
@@ -2706,9 +2716,10 @@
           if (!members.length) continue;
           for (const member of members) {
             const id = REGION_ID[member];
-            weights[id] = Math.max(weights[id], strength);
+            if (value === 'mist') mist[id] = 1;
+            else weights[id] = Math.max(weights[id], strength);
             if (GROUPS[name]) colors[id] = regionColors[name];
-            if (DEEP.has(member)) deep = true;
+            if (DEEP.has(member) || value === 'mist') deep = true;
           }
         }
 
@@ -2734,6 +2745,7 @@
           wash,
           time,
           weights,
+          mist,
           colors,
         };
       });
@@ -2781,6 +2793,7 @@
     const makeState = () => ({
       yaw: 0, pitch: 0, zoom: 1, focus: 0, ghost: 0, wash: 0, time: 0, current: 0, intro: 0,
       weights: REGIONS.map(() => 0),
+      mist: REGIONS.map(() => 0),
       colors: REGIONS.map(() => new THREE.Color()),
     });
 
@@ -2800,6 +2813,7 @@
         out.current = index <= 0 ? 0 : last;
         for (let r = 0; r < N; r++) {
           out.weights[r] = k.weights[r];
+          out.mist[r] = k.mist[r];
           out.colors[r].copy(k.colors[r]);
         }
         return out;
@@ -2820,9 +2834,10 @@
       out.current = fade < 0.5 ? i : i + 1;
       for (let r = 0; r < N; r++) {
         out.weights[r] = lerp(a.weights[r], b.weights[r], fade);
+        out.mist[r] = lerp(a.mist[r], b.mist[r], fade);
 
-        const from = a.weights[r] > 0 ? a.colors[r] : b.colors[r];
-        const to = b.weights[r] > 0 ? b.colors[r] : a.colors[r];
+        const from = a.weights[r] > 0 || a.mist[r] > 0 ? a.colors[r] : b.colors[r];
+        const to = b.weights[r] > 0 || b.mist[r] > 0 ? b.colors[r] : a.colors[r];
         out.colors[r].lerpColors(from, to, fade);
       }
       return out;
@@ -2861,7 +2876,7 @@
       const token = (mark.closest('.step')?.dataset.highlight || '').split(/\s+/)
         .map((entry) => entry.split(':'))
         .find(([name]) => name === mark.dataset.token);
-      const strength = token?.[1] === undefined ? 1 : clamp(Number(token[1]), 0, 1);
+      const strength = token?.[1] === undefined || token[1] === 'mist' ? 1 : clamp(Number(token[1]), 0, 1);
       mark.style.setProperty('--mark', strength < 1
         ? `color-mix(in srgb, var(--c-${mark.dataset.token}) ${Math.round(strength * 100)}%, #fff)`
         : `var(--c-${mark.dataset.token})`);
@@ -3004,7 +3019,10 @@
         shownBrainOpacity = brainOpacity;
         visual.style.setProperty('--brain-o', brainOpacity.toFixed(3));
       }
-      for (let r = 0; r < N; r++) change += approach(state.weights, r, target.weights[r], k);
+      for (let r = 0; r < N; r++) {
+        change += approach(state.weights, r, target.weights[r], k);
+        change += approach(state.mist, r, target.mist[r], k);
+      }
       change += approach(parallax, 'x', pointer.x, k * 0.5);
       change += approach(parallax, 'y', pointer.y, k * 0.5);
       const clockChange = approach(state, 'time', target.time, reduceMotion ? 1 : 1 - Math.exp(-dt * 10));
@@ -3031,6 +3049,7 @@
       shading.uTime.value = now / 1000;
       for (let r = 0; r < N; r++) {
         shading.uRegionWeights.value[r] = state.weights[r];
+        shading.uRegionMist.value[r] = state.mist[r];
         shading.uRegionColors.value[r].copy(target.colors[r]);
       }
 
