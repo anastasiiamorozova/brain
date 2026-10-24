@@ -327,6 +327,7 @@
     }
 
     .quiz { height: var(--screen); }
+    @media (max-width: 760px) { .quiz { margin-bottom: calc(var(--screen) * 0.2); } }
 
     .quiz__pin {
       height: var(--screen);
@@ -339,7 +340,8 @@
       width: min(980px, 100%);
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 0;
+      overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 28px;
       background: rgba(255, 255, 255, 0.55);
@@ -351,8 +353,27 @@
     }
 
     .quiz__frame { display: block; width: 100%; height: 600px; border: 0; }
+    .quiz__card { position: relative; }
+    .quiz__skip {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+    }
+    .quiz__skip svg { width: 16px; height: 16px; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+    .quiz__skip:active { transform: scale(0.985); }
+    .quiz__skip:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    @media (max-width: 640px) { .quiz__skip { top: 8px; right: 8px; } }
     @media (max-width: 640px) {
-      .quiz__card { padding: 12px; border-radius: 20px; }
+      .quiz__card { border-radius: 20px; }
       .quiz__frame { height: 550px; }
     }
 
@@ -796,7 +817,7 @@
       align-items: center;
       gap: 10px;
       max-width: min(420px, calc(100% - 32px));
-      padding: 4px 18px 4px 4px;
+      padding: 4px 6px 4px 4px;
       border-radius: 999px;
       background: var(--onet);
       box-shadow: 0 10px 30px rgba(23, 23, 23, 0.22);
@@ -827,6 +848,21 @@
     .mini-player__play { display: none; }
     .mini-player.is-paused .mini-player__play { display: block; }
     .mini-player.is-paused .mini-player__pause { display: none; }
+    .mini-player__close {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      margin-left: 2px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+    }
+    .mini-player__close svg { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+    .mini-player__close:hover { background: rgba(23, 23, 23, 0.08); }
     .mini-player__title {
       min-width: 0;
       padding: 0;
@@ -923,7 +959,9 @@
     .footer-line { margin-bottom: 8px; }
     .footer-title { margin-top: 36px; margin-bottom: 10px; font-weight: 700; }
     .footer-title + .footer-block { margin-bottom: 30px; }
-    .footer-partner { display: block; width: 150px; height: auto; margin: -16px auto 0; fill: var(--ink); }
+    .footer-partner-link { display: grid; justify-items: center; gap: 8px; width: max-content; margin: -16px auto 0; color: var(--ink); text-decoration: none; }
+    .footer-partner-link span { font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+    .footer-partner { display: block; width: 150px; height: auto; fill: var(--ink); }
 
     @media (max-width: 620px) {
       .page-footer { padding: 52px 16px 64px; }
@@ -1016,12 +1054,19 @@
 
         <header class="intro">
           <div class="brand-logos">
-            <svg class="onet-logo" viewBox="0 14.78 97 30.44" role="img" aria-label="Onet">
-              <path fill="#FFD200" d="M15.22 45.22C23.6258 45.22 30.44 38.4058 30.44 30C30.44 21.5942 23.6258 14.78 15.22 14.78C6.81423 14.78 0 21.5942 0 30C0 38.4058 6.81423 45.22 15.22 45.22Z"></path>
-              <path d="M44.28 38.04C39.77 38.04 36.23 34.51 36.23 29.99C36.23 25.47 39.76 21.94 44.28 21.94C48.8 21.94 52.36 25.47 52.36 29.99C52.36 34.51 48.81 38.04 44.28 38.04ZM44.28 25.86C41.94 25.86 40.24 27.6 40.24 29.99C40.24 32.38 41.94 34.12 44.28 34.12C46.62 34.12 48.35 32.38 48.35 29.99C48.35 27.6 46.64 25.86 44.28 25.86Z"></path>
-              <path d="M64.3499 37.61V28.74C64.3499 26.82 63.2499 25.67 61.3999 25.67C59.3099 25.67 58.1899 27.42 58.1199 27.78V37.61H54.1099V22.39H57.6199V23.95C58.5499 22.65 60.6299 21.94 62.5899 21.94C64.2099 21.94 65.6699 22.52 66.6899 23.58C67.7799 24.71 68.3599 26.33 68.3599 28.26V37.61H64.3499Z"></path>
-              <path d="M94.16 37.88C92.39 37.88 91.06 37.44 90.2 36.57C89.35 35.71 88.94 34.46 88.94 32.74V26.19H86.76V22.39H88.96V18.84L92.95 17.89V22.39H96.91V26.19H92.95V32.79C92.95 33.39 93.29 34.15 94.93 34.15C95.65 34.15 96.88 34 96.88 34V37.57C95.96 37.77 94.98 37.89 94.18 37.89L94.16 37.88Z"></path>
-              <path d="M78.4699 38.04C73.5499 38.04 70.1199 34.73 70.1199 29.99C70.1199 25.25 73.4999 21.94 78.1699 21.94C82.5699 21.94 85.8799 25.4 85.8799 29.99C85.8799 30.51 85.8299 31.01 85.7299 31.6V31.64H74.3199C74.8299 33.41 76.3199 34.39 78.5299 34.39C80.3499 34.39 81.3699 33.48 81.7199 33.09L85.0099 34.92C83.5299 36.96 81.2699 38.03 78.4699 38.03V38.04ZM81.8599 28.52C81.4199 26.66 80.0499 25.56 78.1599 25.56C76.1399 25.56 74.7199 26.64 74.2499 28.52H81.8499H81.8599Z"></path>
+            <svg class="onet-logo" viewBox="0 0 494.37 72.8" role="img" aria-label="Onet Kobieta">
+              <ellipse fill="#FFD200" cx="36.36" cy="36.4" rx="36.36" ry="36.4"></ellipse>
+              <path d="M106.58,26.39c-5.59,0-9.65,4.15-9.65,9.88s4.06,9.88,9.65,9.88,9.72-4.15,9.72-9.88-4.09-9.88-9.72-9.88ZM106.58,55.51c-10.78,0-19.22-8.45-19.22-19.24s8.44-19.24,19.22-19.24,19.3,8.45,19.3,19.24-8.48,19.24-19.3,19.24Z"></path>
+              <path d="M154.53,54.49v-21.2c0-4.6-2.63-7.34-7.05-7.34-4.98,0-7.67,4.19-7.84,5.04v23.5h-9.57V18.1h8.37v3.74c2.23-3.11,7.2-4.81,11.86-4.81,3.87,0,7.35,1.39,9.8,3.92,2.61,2.7,4,6.57,4,11.19v22.36h-9.57Z"></path>
+              <path d="M225.73,55.13c-4.23,0-7.41-1.05-9.47-3.12-2.03-2.05-3.02-5.05-3.02-9.17v-15.66h-5.2v-9.09h5.25l.02-8.49,9.51-2.28v10.77h9.47v9.09h-9.47v15.77c0,1.43.82,3.24,4.72,3.24,1.71,0,4.65-.36,4.65-.36v8.54c-2.19.47-4.54.75-6.45.75h0Z"></path>
+              <path d="M196.35,32.75c-1.04-4.44-4.33-7.08-8.83-7.08-4.83,0-8.22,2.58-9.33,7.08h18.16ZM188.25,55.51c-11.74,0-19.95-7.91-19.95-19.24s8.08-19.24,19.22-19.24c10.51,0,18.43,8.27,18.43,19.24,0,1.24-.11,2.43-.36,3.86l-.02.1h-27.23c1.22,4.24,4.79,6.57,10.05,6.57,4.35,0,6.78-2.17,7.62-3.1l7.85,4.37c-3.54,4.87-8.94,7.44-15.62,7.44h0Z"></path>
+              <path d="M291.75,54.32h-2.24c-.68,0-1.31-.27-1.87-.8-.51-.49-1.19-1.29-2.09-2.43l-14.59-18.8,7.49-9.78c.56-.73,1.07-1.34,1.53-1.87.46-.51,1-.97,1.61-1.34s1.31-.63,2.12-.78c.8-.17,1.85-.24,3.11-.24h.88c.29,0,.32-.12.32-.27s-.05-.22-.32-.22h-12.38c-.27,0-.32.07-.32.22s0,.27.32.27h1.36c1.68,0,1.92,1.05,1.92,1.65s-.15,1.19-.44,1.75c-.29.54-.73,1.22-1.34,1.99l-10.48,13.77v-19.17h5.21c.29,0,.32-.12.32-.27s-.05-.22-.32-.22h-.51c-11.24.02-14.23,0-14.76,0-.27,0-.32.07-.32.22s0,.27.32.27h5.38v36.02h-5.38c-.15,0-.19.05-.24.07-.05.05-.07.1-.07.15,0,.15,0,.27.32.27h15.25c.29,0,.32-.12.32-.27,0-.02-.02-.07-.07-.15-.02-.02-.1-.07-.24-.07h-5.21v-16.1l1.51-1.99,11.89,15.3c.17.24.34.46.51.68.19.24.29.56.29.88,0,.56-.34.95-.95,1.09-.51.1-1.17.17-1.9.17h-2.51c-.29,0-.32.12-.32.27,0,.05,0,.1.07.15h.02c.12.05.29.05.44.05h16.39c.22,0,.27-.07.27-.27,0-.05,0-.1-.07-.15-.02-.02-.07-.07-.19-.07l-.02.02Z"></path>
+              <path d="M322.98,22.72c-1.58-1.78-3.53-3.19-5.74-4.26s-4.67-1.61-7.25-1.61-5.08.54-7.25,1.61c-2.19,1.07-4.11,2.48-5.72,4.26-1.61,1.75-2.87,3.82-3.77,6.13s-1.34,4.74-1.34,7.25.46,4.94,1.34,7.25c.9,2.31,2.16,4.38,3.77,6.13,1.61,1.75,3.53,3.19,5.72,4.26,2.19,1.05,4.62,1.58,7.25,1.58s5.03-.54,7.25-1.61c2.21-1.07,4.16-2.48,5.74-4.26s2.87-3.82,3.77-6.13c.9-2.31,1.36-4.74,1.36-7.25s-.46-4.94-1.36-7.25c-.9-2.31-2.16-4.38-3.77-6.13v.02ZM323.15,36.1c0,2.34-.22,4.65-.66,6.86-.44,2.24-1.17,4.23-2.19,5.98-1.02,1.75-2.38,3.19-4.06,4.26-1.68,1.09-3.77,1.63-6.25,1.63s-4.57-.56-6.25-1.63c-1.65-1.07-3.02-2.51-4.06-4.26-1.02-1.75-1.75-3.75-2.19-5.98-.44-2.21-.66-4.52-.66-6.86s.22-4.65.66-6.86c.44-2.24,1.17-4.23,2.19-5.98,1.02-1.75,2.38-3.19,4.06-4.26,1.68-1.09,3.77-1.63,6.25-1.63s4.57.56,6.25,1.63c1.65,1.07,3.02,2.51,4.06,4.26,1.02,1.75,1.75,3.75,2.19,5.98.44,2.21.66,4.52.66,6.86Z"></path>
+              <path d="M358.06,38.73c-.92-.75-1.99-1.39-3.19-1.87-1.22-.49-2.53-.83-3.89-1.02l-1.75-.27,1.75-.24c1.26-.17,2.46-.49,3.6-.92,1.12-.44,2.12-1.02,2.94-1.73.83-.71,1.48-1.58,1.95-2.6.46-1.02.71-2.21.71-3.53,0-1.92-.46-3.48-1.36-4.6-.97-1.22-2.12-2.12-3.41-2.68-1.48-.66-2.75-1-4.18-1.19-1.26-.15-18.12-.27-18.27-.27s-.32,0-.39.07c0,0-.05.07-.05.15,0,.22.07.27.27.27h5.38v36.02h-5.38c-.12,0-.17.02-.19.07-.05.05-.07.1-.07.15s.02.12.07.22v.02c.07.02.15.02.22.02.12,0,.49,0,1.05-.05.17,0,1.24,0,3.02-.02h.02c4.82-.05,13.77-.12,14.96-.32,1.58-.27,3.09-.75,4.45-1.46,1.36-.71,2.48-1.68,3.36-2.89s1.31-2.8,1.31-4.72c0-1.46-.27-2.75-.78-3.84-.51-1.09-1.24-2.02-2.16-2.8l.02.02ZM342.86,35.35v-17.08h.41c1.24,0,2.58.05,3.96.12,1.39.1,2.7.41,3.87.97,1.19.56,2.19,1.44,2.94,2.63.78,1.19,1.17,2.87,1.17,4.99s-.36,3.62-1.05,4.77c-.71,1.14-1.63,1.99-2.75,2.53-1.09.54-2.36.85-3.7.95-1.31.1-2.65.12-3.94.12h-.92ZM344.58,54.17h-1.7v-18.32h.92c1.31,0,2.7.07,4.16.19,1.46.12,2.8.49,3.99,1.09,1.19.61,2.19,1.56,2.97,2.8.78,1.26,1.17,3.02,1.17,5.25s-.36,3.82-1.07,5.01c-.71,1.19-1.65,2.12-2.8,2.7-1.12.58-2.38.95-3.72,1.07-1.31.12-2.63.19-3.89.19h-.02Z"></path>
+              <path d="M383.65,18.3c.22,0,.27-.07.27-.27,0-.15-.05-.22-.27-.22-.24,0-.66,0-1.17.02-.63,0-12.89,0-14.16-.02-.22,0-.27.07-.27.22,0,.22.07.27.27.27h5.38v36.02h-5.38c-.12,0-.17.02-.19.07-.05.05-.07.1-.07.15,0,.22.07.27.27.27.24,0,.63,0,1.17-.02h3.75c3.7,0,9.51,0,10.41.02.19,0,.27-.07.27-.27,0-.05-.02-.12-.07-.15-.02-.02-.07-.07-.19-.07h-5.21V18.3h5.21Z"></path>
+              <path d="M408.82,18.3c2.31,0,4.16.24,5.5.75,1.34.51,2.36,1.17,3.04,1.99.68.83,1.09,1.78,1.29,2.85.17,1.02.29,2.09.36,3.19.02.24.07.44.1.56v.12l.1-.07h.07c.1,0,.15,0,.15-.02v-.05c.02-.17.02-.34.02-.51,0-.22,0-.44-.02-.71,0-.34-.05-.68-.05-1.02,0-.41-.05-.92-.07-1.46,0-.17-.05-.56-.07-1.02v-.17c-.1-1.09-.19-2.46-.22-3.04,0-.66,0-1.24-.02-1.73v-.07h-.07c-.15,0-.32.02-.54.05-.32,0-.78.02-1.39.02-.22,0-24.88-.07-26.29-.1-.27,0-.32.07-.32.22s0,.27.32.27h5.38v36.02h-5.38c-.15,0-.19.05-.24.07-.02.02-.07.1-.07.15,0,.15,0,.27.32.27.22,0,.58,0,1.14-.02h27.1v-1.39c0-1.12.22-3.82.36-5.79.07-1.05.15-1.95.17-2.29,0-.19,0-.39-.05-.51v-.05h-.17c-.1,0-.15,0-.15.02l-.02.24c0,.12-.05.24-.07.39-.17,1.09-.41,2.21-.68,3.26-.29,1.07-.78,2.04-1.44,2.87-.66.83-1.63,1.51-2.82,1.99-1.22.51-2.8.75-4.74.75h-8.51v-19.9h2.6c1.46,0,2.58.12,3.43.41.85.27,1.51.71,1.95,1.29.44.56.73,1.31.85,2.21.12.85.24,1.87.34,3.02,0,.15,0,.29.05.51.02.1.17.1.22.1.19,0,.19-.05.19-.07v-.05s.02-.27.02-.46c0-1-.05-2.09-.12-3.31-.1-1.19-.1-6.37,0-7.27.1-.9.12-1.92.12-3.06,0-.17,0-.34-.05-.49v-.07h-.17c-.17,0-.32.07-.32.58,0,.71-.02,1.44-.1,2.14-.07.75-.32,1.44-.73,2.02-.41.61-1.07,1.07-1.95,1.44-.88.36-2.09.54-3.75.54h-2.6v-15.66h8.03l-.02.05Z"></path>
+              <path d="M457.1,27.76v-.54l-.61-9.34v-.05h-29.55l-.56,9.44c0,.27,0,.44.05.51v.07l.07-.05h.1c.1,0,.15,0,.17-.02h.05v-.07c.02-.12.05-.29.07-.51.1-1.05.27-2.12.46-3.16.22-1.07.66-2.04,1.31-2.89.54-.71,1.48-1.65,2.89-2.24,1.14-.46,2.72-.68,5.23-.68h2.6v36.1h-5.38c-.12,0-.17.02-.19.07-.05.05-.07.1-.07.15,0,.22.07.27.27.27.24,0,.63,0,1.17-.02h3.75c3.7,0,9.51,0,10.41.02.19,0,.27-.07.27-.27,0-.05-.02-.12-.07-.15-.02-.02-.07-.07-.19-.07h-5.21V18.22h2.55c2.53,0,4.09.19,5.25.68,1.41.58,2.38,1.53,2.92,2.24.66.85,1.12,1.82,1.34,2.89.22,1.05.36,2.12.46,3.16,0,.24,0,.44.07.56l.12.34v-.29h.1c.12,0,.17,0,.17-.02h.05l-.07-.02Z"></path>
+              <path d="M494.27,54.39s-.1-.07-.19-.07h-3.14c-.24,0-.49-.05-.71-.15-.22-.1-.44-.27-.66-.51-.19-.22-.41-.56-.61-.97-.19-.39-.41-.95-.66-1.68l-12.23-33.4c-.22-.51-.32-.66-.34-.71-.02-.02-.07-.1-.15-.07-.1,0-.19.12-.32.36-.15.34-.32.75-.49,1.24l-10.65,31.55c-.51,1.53-1.22,2.65-2.16,3.31-.92.66-2.21,1-3.82,1h-.88c-.15,0-.19.05-.24.07-.05.05-.07.1-.07.15,0,.15,0,.27.32.27h11.97c.22,0,.27-.07.27-.27,0-.05,0-.1-.07-.15-.02-.02-.07-.07-.19-.07h-1.92c-2.36,0-2.87-1.34-2.87-2.46,0-.58.1-1.24.29-1.97.17-.68.41-1.48.71-2.48l2.14-6.45h11.89l3.87,10.61c.1.27.19.54.24.75.05.22.1.46.1.68,0,.75-.39,1.05-.71,1.12-.36.12-.95.17-1.75.17h-3.19c-.22,0-.27.07-.27.27,0,.05,0,.1.05.17l.12.17v-.15h16.15c.22,0,.27-.07.27-.27,0-.05,0-.1-.07-.15l-.02.07ZM479.26,40.48h-11.53l5.52-16.54,6.01,16.54Z"></path>
             </svg>
             <svg class="medonet-logo" viewBox="0 0 159.47 30.57" role="img" aria-label="Medonet">
               <circle fill="#FFD200" cx="15.28" cy="15.28" r="15.28"></circle>
@@ -1107,6 +1152,7 @@
             <div class="quiz__card">
 
               <iframe class="quiz__frame" data-src="https://pg855gqneg0t.ring-pages.io/?tryb=matka" title="Test Mózg na pełnych obrotach"></iframe>
+              <button class="quiz__skip" type="button" aria-label="Pomiń test i przewiń dalej"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
             </div>
           </div>
         </section>
@@ -1254,7 +1300,7 @@
       <p>Dr Kieszkowska-Grudny podkreśla, że nie istnieją magiczne rozwiązania. — Oczywiście są strategie, które pomagają tu i teraz. <strong>Najprostszą z nich jest oddech.</strong> Regularne zatrzymanie się na kilka spokojnych oddechów naprawdę ma znaczenie. Ale głębsza praca dotyczy naszych przekonań, nawyków i codziennych rytuałów. Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy. Dlatego tak ważne są regularny sen, higiena rytmu dobowego czy praktyki uważności. I oczywiście rozpoznanie, jakie znaczenie nadajemy określonym sytuacjom.</p>
       <blockquote class="pull">Stres nie bierze się wyłącznie z presji. W dużej mierze wynika z tego, jak tę presję interpretujemy.<cite>dr Anna Kieszkowska‑Grudny</cite></blockquote>
       <p>Odchodzę od ekranu, robię kilka ćwiczeń naprzemiennych (proste ćwiczenia fizyczne angażujące przeciwne strony ciała), wyglądam przez okno. Przez ok. pięć minut patrzę na spadające z drzewa liście. Jest lepiej, rzeczywiście. Ale muszę wrócić do komputera.</p>
-      <figure class="video" data-mp4="https://media.onet.pl/_ms/8ce6b3a4-9376-492b-9668-91a11ce51fbb.1792572421178.2000.mp4">
+      <figure class="video" data-mp4="https://media.onet.pl/_ms/8ce6b3a4-9376-492b-9668-91a11ce51fbb.1792678892273.2000.mp4">
         <video playsinline preload="none" controlslist="nodownload" data-poster="assets/wideo-stres.webp?v=20261021-1615" aria-label="Zobacz, co dzieje się z mózgiem, gdy się stresujemy"></video>
         <button class="video__play" type="button" aria-label="Odtwórz wideo: Zobacz, co dzieje się z mózgiem, gdy się stresujemy"></button>
         <figcaption class="video__title">Zobacz, co dzieje się z mózgiem, gdy się stresujemy</figcaption>
@@ -1401,6 +1447,7 @@
       </svg>
       <p class="footer-block footer-line"><strong>Skład i oprawa graficzna:</strong> Michał Rogalski</p>
       <p class="footer-block footer-line"><strong>Autorka projektu:</strong> Karolina Drogowska</p>
+      <p class="footer-block footer-line"><strong>Autorki Testu Zdolności Poznawczej:</strong> dr Anna Kieszkowska-Grudny, mgr Aleksandra Wójcik</p>
       <p class="footer-block footer-line"><strong>Opieka redakcyjna:</strong> Marta Tabiś, Karolina Świdrak</p>
       <p class="footer-block footer-line"><strong>Autorka tekstu:</strong> Joanna Barańska</p>
       <p class="footer-block footer-line"><strong>Autorka treści wideo:</strong> Jaśmina Marczewska</p>
@@ -1408,7 +1455,8 @@
       <p class="footer-block footer-line"><strong>Model 3D:</strong> Neurotorium.org © Lundbeck Foundation</p>
       <div class="footer-block footer-title">Patronat merytoryczny:</div>
       <p class="footer-block">Minds of Hope | Instytut BezStresu</p>
-        <svg class="footer-partner" viewBox="0 0 316.29 57.83" role="img" aria-label="Bez stresu">
+        <a class="footer-partner-link" href="https://instytutbezstresu.pl/" target="_blank" rel="noopener noreferrer">
+          <svg class="footer-partner" viewBox="0 0 316.29 57.83" role="img" aria-label="Bez stresu">
           <path d="M93.9,5.08a1.59,1.59,0,0,1,1.59-1.59h8.38c6.14,0,8.76,3.57,8.76,7.9a8,8,0,0,1-3.17,5.94,8.23,8.23,0,0,1,4.78,7.5c0,4.88-3,8.86-9.87,8.86H95.49a1.6,1.6,0,0,1-1.59-1.6Zm10,10.89c3.77,0,4.93-2.26,4.93-4.58s-1.16-4.53-4.93-4.53H97.93V16Zm.5,14.34c4.53,0,5.89-2.71,5.89-5.48s-1.36-5.49-5.89-5.49H97.93v11Z"></path>
           <path d="M123.85,31.84V13.74a1.85,1.85,0,0,1,1.85-1.85h10.41a1.49,1.49,0,0,1,1.49,1.49h0a1.49,1.49,0,0,1-1.49,1.48h-8.58V20.7h6.77a1.49,1.49,0,0,1,1.48,1.49h0a1.48,1.48,0,0,1-1.48,1.48h-6.77v7h8.58a1.49,1.49,0,0,1,1.49,1.48h0a1.49,1.49,0,0,1-1.49,1.49H125.7A1.85,1.85,0,0,1,123.85,31.84Z"></path>
           <path d="M249,31.84V13.74a1.85,1.85,0,0,1,1.85-1.85h10.41a1.49,1.49,0,0,1,1.48,1.49h0a1.48,1.48,0,0,1-1.48,1.48H252.7V20.7h6.77A1.49,1.49,0,0,1,261,22.19h0a1.48,1.48,0,0,1-1.49,1.48H252.7v7h8.59a1.48,1.48,0,0,1,1.48,1.48h0a1.49,1.49,0,0,1-1.48,1.49H250.88A1.85,1.85,0,0,1,249,31.84Z"></path>
@@ -1429,6 +1477,8 @@
           <path class="instytut" d="M211.6,57.78c-2.53,0-4.21-1.61-4.21-5.19V46.87H208v5.74c0,3.2,1.46,4.61,3.6,4.61s3.61-1.41,3.61-4.61V46.87h.6v5.72C215.81,56.17,214.15,57.78,211.6,57.78Z"></path>
           <path class="instytut" d="M232.76,47.42V57.54h-.6V47.42h-3.78v-.55h8.16v.55Z"></path>
         </svg>
+          <span>www.instytutbezstresu.pl</span>
+        </a>
     </div>
   </footer>
 
@@ -1439,6 +1489,7 @@
       <svg class="mini-player__play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.8v14.4a1 1 0 0 0 1.5.9l11.5-7.2a1 1 0 0 0 0-1.8L8.5 3.9A1 1 0 0 0 7 4.8z"></path></svg>
     </button>
     <button class="mini-player__title" type="button"></button>
+    <button class="mini-player__close" type="button" aria-label="Zamknij i zatrzymaj"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
   </div>
 
   <script>
@@ -1591,13 +1642,14 @@
       if (event.data && event.data.type === 'neuro:start') triggerPaywall('test start');
     });
 
-    var second = document.querySelectorAll('.step')[1];
+    var secondStep = document.querySelectorAll('.step')[1];
+    var second = secondStep && secondStep.querySelector('.step-text');
     if (second && 'IntersectionObserver' in window) {
       var seen = new IntersectionObserver(function (entries) {
         if (!entries[entries.length - 1].isIntersecting) return;
         seen.disconnect();
         triggerPaywall('second brain step');
-      }, { rootMargin: '-45% 0px -45% 0px' });
+      }, { rootMargin: '0px 0px -15% 0px' });
       seen.observe(second);
     }
   })();
@@ -1645,6 +1697,12 @@
     });
     miniTitle.addEventListener('click', function () {
       if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    mini.querySelector('.mini-player__close').addEventListener('click', function () {
+      if (!current) return;
+      current.querySelector('video').pause();
+      current = null;
+      updateMini();
     });
 
     window.s1Gotowe.then(function () {
@@ -1769,7 +1827,18 @@
 
   <script>
   (function () {
+    var skip = document.querySelector('.quiz__skip');
+    var next = document.querySelector('.step');
+    if (!skip || !next) return;
+    skip.addEventListener('click', function () {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      next.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    });
+  })();
+  </script>
 
+  <script>
+  (function () {
     var button = document.getElementById('scrollHint');
     var first = document.querySelector('.wstep') || document.querySelector('.quiz') || document.querySelector('.step');
     if (!button || !first) return;
