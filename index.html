@@ -326,11 +326,11 @@
       .wstep__card { font-size: 17px; }
     }
 
-    .quiz { height: var(--screen); }
+    .quiz { min-height: var(--screen); }
     @media (max-width: 760px) { .quiz { margin-bottom: calc(var(--screen) * 0.2); } }
 
     .quiz__pin {
-      height: var(--screen);
+      min-height: var(--screen);
       display: grid;
       place-items: center;
       padding: calc(var(--banner-now) + 16px) 16px 16px;
@@ -352,7 +352,7 @@
       pointer-events: auto;
     }
 
-    .quiz__frame { display: block; width: 100%; height: 600px; border: 0; }
+    .quiz__frame { display: block; width: 100%; height: clamp(550px, calc(var(--screen) * 0.85), 760px); border: 0; }
     .quiz__card { position: relative; }
     .quiz__skip {
       position: absolute;
@@ -374,7 +374,7 @@
     @media (max-width: 640px) { .quiz__skip { top: 8px; right: 8px; } }
     @media (max-width: 640px) {
       .quiz__card { border-radius: 20px; }
-      .quiz__frame { height: 550px; }
+      .quiz__frame { height: clamp(550px, calc(var(--screen) * 0.85 - 44px), 760px); }
     }
 
     .partner {
@@ -1213,7 +1213,7 @@
 
         <section class="step" data-time="00:30" data-highlight="hippocampus neocortex:mist" data-yaw="-225" data-pitch="8" data-zoom="1.08">
           <div class="step-text">
-            <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w korze nowej. To tzw. konsolidacja pamięci.</p>
+            <p>W głębokim śnie NREM, głównie w pierwszej połowie nocy, <mark data-token="hippocampus">hipokamp</mark> „odtwarza” ślady pamięciowe z minionego dnia. Dzięki zsynchronizowanym falom mózgowym są one wzmacniane i stopniowo utrwalane w <mark data-token="neocortex">korze nowej</mark>. To tzw. konsolidacja pamięci.</p>
           </div>
         </section>
 
@@ -3097,7 +3097,9 @@
       const clockChange = approach(state, 'time', target.time, reduceMotion ? 1 : 1 - Math.exp(-dt * 10));
       if (clockChange > 0 || needsRender) updateTimeline(state.time);
 
-      const flowing = state.wash > 0.001 && !reduceMotion;
+      const misting = !reduceMotion && state.mist.some((m) => m > 0.01);
+      const flowing = (state.wash > 0.001 && !reduceMotion) || misting;
+      const breath = misting ? 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(now / 1000 * Math.PI * 2 / 3.5)) : 1;
       if (!brain || (change < 1e-5 && !needsRender && !flowing && !spinning)) {
         needsRender = false;
         return;
@@ -3118,7 +3120,7 @@
       shading.uTime.value = now / 1000;
       for (let r = 0; r < N; r++) {
         shading.uRegionWeights.value[r] = state.weights[r];
-        shading.uRegionMist.value[r] = state.mist[r];
+        shading.uRegionMist.value[r] = state.mist[r] * breath;
         shading.uRegionColors.value[r].copy(target.colors[r]);
       }
 
